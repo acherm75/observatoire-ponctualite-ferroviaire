@@ -1,10 +1,12 @@
 # 🚆 Observatoire de la ponctualité ferroviaire en France
 
+[![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ponctualite-ferroviaire.streamlit.app/) [![Pipeline quotidien](https://github.com/acherm75/observatoire-ponctualite-ferroviaire/actions/workflows/pipeline.yml/badge.svg)](https://github.com/acherm75/observatoire-ponctualite-ferroviaire/actions/workflows/pipeline.yml)
+
 Pipeline data de bout en bout, construit uniquement sur des **données ouvertes** (SNCF Open Data et Météo-France) :
 ingestion automatisée, entrepôt analytique, modélisation en étoile avec dbt, tests de qualité, analyse exploratoire,
 prévision par machine learning et restitution (Streamlit et Power BI).
 
-> **Démo en ligne** : _lien Streamlit à ajouter après déploiement_
+> **Démo en ligne** : https://ponctualite-ferroviaire.streamlit.app/
 
 ## Ce que montrent les données
 

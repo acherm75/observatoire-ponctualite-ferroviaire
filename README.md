@@ -44,7 +44,7 @@ flowchart LR
 | Transformation | dbt (adaptateur `dbt-duckdb`) | Staging → intermediate → marts, tables de référence (seeds), tests génériques et singuliers |
 | ML | XGBoost, scikit-learn | Prévision du taux de retard par liaison pour le mois suivant, validée sur une période de test temporelle |
 | Restitution | Streamlit, Plotly, Power BI | App publique et rapport BI sur le même modèle de données |
-| Orchestration | GitHub Actions | Exécution quotidienne du pipeline et commit automatique des données mises à jour |
+| Orchestration | GitHub Actions | Exécution quotidienne : tests dbt chaque jour, republication des données seulement si les sources SNCF ou le code ont changé (empreinte `scripts/fingerprint.py`) |
 
 ## Modèle de données
 

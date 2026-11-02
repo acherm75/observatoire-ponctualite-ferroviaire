@@ -26,20 +26,30 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--skip-ingest", action="store_true")
     parser.add_argument("--refresh-meteo-history", action="store_true")
+    parser.add_argument("--force", action="store_true",
+                        help="republier les marts même si données SNCF et code sont inchangés")
     args = parser.parse_args()
 
     if not args.skip_ingest:
         sncf.run()
         meteo.run(refresh_history=args.refresh_meteo_history)
     load_duckdb.run()
+    # dbt build tourne toujours : ses tests surveillent les données fraîches chaque jour.
     dbt_build()
+
+    from scripts import fingerprint
+    fp = fingerprint.compute()
+    if fp == fingerprint.stored() and not args.force:
+        log.info("Données SNCF et code inchangés : marts non republiés.")
+        return
 
     from ml import forecast
     forecast.run()
 
     from scripts import export_marts
     export_marts.run()
-    log.info("Pipeline terminé.")
+    fingerprint.save(fp)
+    log.info("Pipeline terminé, marts republiés.")
 
 
 if __name__ == "__main__":

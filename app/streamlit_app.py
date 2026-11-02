@@ -3,7 +3,10 @@
 Lit les tables exportées par le pipeline (data/marts/*.parquet).
 Lancement local :  streamlit run app/streamlit_app.py
 """
+import datetime as dt
 import json
+import os
+import sys
 from pathlib import Path
 
 import duckdb
@@ -53,7 +56,8 @@ for col, act in zip(cols, ["TGV", "TER", "Intercités"]):
     delta = None if prev.empty else f"{100 * (cur - prev.iloc[0]):+.1f} pts vs N-1".replace(".", ",")
     col.metric(f"{act} · {m:%m/%Y}", pct(cur), delta)
 
-onglets = st.tabs(["Tendance", "Liaisons", "Causes des retards", "Régions TER", "Effet météo", "Prévisions"])
+onglets = st.tabs(["Tendance", "Liaisons", "Causes des retards", "Régions TER", "Effet météo", "Prévisions",
+                   "🤖 Assistant IA"])
 
 # ---------------------------------------------------------------- tendance
 with onglets[0]:
@@ -190,6 +194,105 @@ with onglets[5]:
             "taux_retard_prevu": "{:.1%}", "taux_retard_mois_precedent": "{:.1%}",
             "taux_retard_moyen_12_mois": "{:.1%}"}), hide_index=True, width="stretch")
 
+# ---------------------------------------------------------------- assistant IA
+def secret(nom: str, defaut=None):
+    try:
+        return st.secrets.get(nom, os.environ.get(nom, defaut))
+    except Exception:  # pas de fichier secrets.toml
+        return os.environ.get(nom, defaut)
+
+
+@st.cache_resource
+def assistant(fournisseur: str, cle: str, modele: str | None):
+    sys.path.insert(0, str(Path(__file__).parent))
+    from agent import creer_assistant
+    return creer_assistant(MARTS, fournisseur, cle, modele)
+
+
+@st.cache_resource
+def compteur_global() -> dict:
+    """Compteur partagé par tous les visiteurs (réinitialisé chaque jour ou au redémarrage)."""
+    return {"jour": dt.date.today(), "n": 0}
+
+
+EXEMPLES = [
+    "Quelles sont les 5 liaisons TGV les moins ponctuelles en 2025 ?",
+    "La ponctualité des TER en Bretagne s'améliore-t-elle depuis 2019 ?",
+    "Quelle part des retards TGV est due au matériel roulant, année par année ?",
+    "Les mois de canicule sont-ils moins ponctuels pour les TER ?",
+]
+
+with onglets[6]:
+    fournisseur = secret("ASSISTANT_FOURNISSEUR", "gemini")
+    cle = secret("ASSISTANT_CLE_API")
+    quota_session = int(secret("ASSISTANT_QUESTIONS_PAR_SESSION", 10))
+    quota_jour = int(secret("ASSISTANT_QUESTIONS_PAR_JOUR", 100))
+    st.caption("Pose une question en français : l'IA écrit la requête SQL, l'exécute sur les données "
+               "de l'observatoire (lecture seule), vérifie le résultat puis répond. Les requêtes sont affichées.")
+
+    if not cle:
+        st.info("L'assistant n'est pas configuré : ajoute `ASSISTANT_CLE_API` dans les secrets de l'app.")
+    else:
+        bot = assistant(fournisseur, cle, secret("ASSISTANT_MODELE"))
+        ss = st.session_state
+        ss.setdefault("chat", [])        # [{"question", "reponse"}]
+        ss.setdefault("nb_questions", 0)
+
+        cols = st.columns(len(EXEMPLES))
+        clic = next((q for c, q in zip(cols, EXEMPLES) if c.button(q, width="stretch")), None)
+
+        for echange in ss.chat:
+            with st.chat_message("user"):
+                st.markdown(echange["question"])
+            with st.chat_message("assistant"):
+                st.markdown(echange["reponse"].texte)
+                for i, e in enumerate(echange["reponse"].etapes, 1):
+                    with st.expander(f"Requête {i} · {e.objectif or 'SQL'}"):
+                        st.code(e.sql, language="sql")
+                        if e.erreur:
+                            st.error(e.erreur)
+                        elif e.resultat is not None:
+                            st.dataframe(e.resultat, hide_index=True, width="stretch")
+
+        saisie = st.chat_input("Ex. : quelle région TER est la plus ponctuelle en 2025 ?", max_chars=400)
+        question = saisie or clic
+        if question:
+            g = compteur_global()
+            if g["jour"] != dt.date.today():
+                g.update(jour=dt.date.today(), n=0)
+            if ss.nb_questions >= quota_session:
+                st.warning(f"Limite de {quota_session} questions par visite atteinte (démo publique). "
+                           "Recharge la page plus tard ou lance l'app en local.")
+            elif g["n"] >= quota_jour:
+                st.warning("Le quota quotidien de la démo est atteint. Reviens demain !")
+            else:
+                ss.nb_questions += 1
+                g["n"] += 1
+                historique = []
+                for echange in ss.chat[-3:]:  # contexte court pour les questions de suivi
+                    historique += [{"role": "user", "content": echange["question"]},
+                                   {"role": "assistant", "content": echange["reponse"].texte}]
+                with st.spinner("Analyse des données…"):
+                    try:
+                        rep = bot.repondre(question, historique)
+                    except Exception as e:
+                        import openai
+                        from agent import QuotaEpuise
+                        msg = ("Le quota gratuit du service d'IA est atteint pour le moment. Réessaie plus tard."
+                               if isinstance(e, (QuotaEpuise, openai.RateLimitError, openai.APIConnectionError))
+                               else "L'assistant a rencontré une erreur.")
+                        st.error(msg)
+                        rep = None
+                if rep:
+                    ss.chat.append({"question": question, "reponse": rep})
+                    st.rerun()
+
+        if ss.chat:
+            st.caption(f"{ss.nb_questions}/{quota_session} questions utilisées pendant cette visite.")
+            if st.button("Effacer la conversation"):
+                ss.chat = []
+                st.rerun()
+
 st.divider()
 st.caption("Sources : SNCF Open Data (ressources.data.sncf.com), Météo-France (meteo.data.gouv.fr). "
-           "Pipeline : Python → DuckDB → dbt → XGBoost → Streamlit.")
+           "Pipeline : Python → DuckDB → dbt → XGBoost → Streamlit · Assistant IA : modèle gratuit (Gemini, Groq ou Mistral).")

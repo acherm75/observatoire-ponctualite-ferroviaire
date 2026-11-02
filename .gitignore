@@ -11,3 +11,4 @@ transform/dbt_packages/
 transform/logs/
 logs/
 .env
+.streamlit/secrets.toml

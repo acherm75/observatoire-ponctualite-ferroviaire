@@ -22,6 +22,21 @@ prévision par machine learning et restitution (Streamlit et Power BI).
 
 Le détail est dans [`notebooks/exploration.ipynb`](notebooks/exploration.ipynb).
 
+## Assistant IA : poser une question en français
+
+L'onglet **🤖 Assistant IA** de l'app répond à des questions comme *« Quelles sont les 5 liaisons TGV les moins
+ponctuelles en 2025 ? »*. C'est un agent **text-to-SQL** ([`app/agent.py`](app/agent.py)) :
+
+1. un modèle de langage gratuit (Google Gemini par défaut, ou Groq / Mistral) reçoit le schéma des marts et des règles métier (ex. recalculer un taux à partir des sommes, exclure les lignes incohérentes) ;
+2. il écrit une requête DuckDB et l'exécute via un outil `run_sql`, lit le résultat et corrige la requête si elle échoue ;
+3. il répond en français en ne citant que des chiffres issus des requêtes, qui sont affichées sous la réponse.
+
+Pourquoi du text-to-SQL plutôt qu'un RAG sur des documents : les questions portent sur des chiffres, et une requête
+sur les données exactes est vérifiable, là où un RAG paraphraserait des extraits.
+
+Garde-fous : base en mémoire verrouillée (aucun accès disque ni réseau), une seule instruction `SELECT` par appel,
+délai max de 10 s, 6 étapes max par question ; quotas par visite et par jour pour rester dans les limites gratuites du fournisseur, et relais automatique vers un autre modèle quand le quota du jour d'un modèle est épuisé.
+
 ## Architecture
 
 ```mermaid
@@ -46,6 +61,7 @@ flowchart LR
 | Transformation | dbt (adaptateur `dbt-duckdb`) | Staging → intermediate → marts, tables de référence (seeds), tests génériques et singuliers |
 | ML | XGBoost, scikit-learn | Prévision du taux de retard par liaison pour le mois suivant, validée sur une période de test temporelle |
 | Restitution | Streamlit, Plotly, Power BI | App publique et rapport BI sur le même modèle de données |
+| Assistant IA | LLM gratuit via API compatible OpenAI (Gemini, Groq ou Mistral), outil SQL | Questions en français traduites en SQL sur les marts |
 | Orchestration | GitHub Actions | Exécution quotidienne : tests dbt chaque jour, republication des données seulement si les sources SNCF ou le code ont changé (empreinte `scripts/fingerprint.py`) |
 
 ## Modèle de données
@@ -119,7 +135,7 @@ pipeline.py       point d'entrée unique
 
 ## Pistes suivantes
 
-- Assistant « pose une question sur la ponctualité » (RAG et text-to-SQL sur les marts)
+- Jeu de questions de référence pour évaluer l'assistant (exactitude des chiffres renvoyés)
 - Perturbations en temps réel via l'API SNCF (Navitia)
 - Granularité journalière de la météo pour isoler les épisodes extrêmes (canicules, tempêtes)
 

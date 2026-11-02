@@ -1,0 +1,9 @@
+{
+  "code": "81be22081caa49ba87ab5a8221fd6b0c1b87b0e12343d4ace92ba297bf6f87b1",
+  "donnees_sncf": {
+    "frequentation_gares": "db91bd9553d066d99a2497448e274301",
+    "intercites_regularite": "05827c0b93a233c48b6f2351b5055545",
+    "ter_regularite": "ae0004107962bff259e0d3dfe62b31b9",
+    "tgv_regularite": "09a9e62fcf4929810cc3025b6a80a4f6"
+  }
+}

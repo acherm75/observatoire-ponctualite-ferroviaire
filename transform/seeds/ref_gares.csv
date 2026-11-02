@@ -1,0 +1,113 @@
+nom_source,nom_gare,code_departement,pays
+AIX EN PROVENCE TGV,Aix-en-Provence TGV,13,France
+ANGERS SAINT LAUD,Angers Saint-Laud,49,France
+ANGOULEME,Angoulême,16,France
+ANNECY,Annecy,74,France
+ARRAS,Arras,62,France
+AVIGNON TGV,Avignon TGV,84,France
+BARCELONA,Barcelone,,Espagne
+BELLEGARDE (AIN),Bellegarde (Ain),01,France
+BESANCON FRANCHE COMTE TGV,Besançon Franche-Comté TGV,25,France
+BORDEAUX ST JEAN,Bordeaux Saint-Jean,33,France
+BREST,Brest,29,France
+CHAMBERY CHALLES LES EAUX,Chambéry Challes-les-Eaux,73,France
+DIJON VILLE,Dijon Ville,21,France
+DOUAI,Douai,59,France
+DUNKERQUE,Dunkerque,59,France
+FRANCFORT,Francfort,,Allemagne
+GENEVE,Genève,,Suisse
+GRENOBLE,Grenoble,38,France
+ITALIE,Italie,,Italie
+LA ROCHELLE VILLE,La Rochelle Ville,17,France
+LAUSANNE,Lausanne,,Suisse
+LAVAL,Laval,53,France
+LE CREUSOT MONTCEAU MONTCHANIN,Le Creusot Montceau Montchanin,71,France
+LE MANS,Le Mans,72,France
+LILLE,Lille,59,France
+LYON PART DIEU,Lyon Part-Dieu,69,France
+MACON LOCHE,Mâcon Loché,71,France
+MADRID,Madrid,,Espagne
+MARNE LA VALLEE,Marne-la-Vallée Chessy,77,France
+MARSEILLE ST CHARLES,Marseille Saint-Charles,13,France
+METZ,Metz,57,France
+MONTPELLIER,Montpellier,34,France
+MULHOUSE VILLE,Mulhouse Ville,68,France
+NANCY,Nancy,54,France
+NANTES,Nantes,44,France
+NICE VILLE,Nice Ville,06,France
+NIMES,Nîmes,30,France
+PARIS EST,Paris Est,75,France
+PARIS LYON,Paris Gare de Lyon,75,France
+PARIS MONTPARNASSE,Paris Montparnasse,75,France
+PARIS NORD,Paris Nord,75,France
+PARIS VAUGIRARD,Paris Vaugirard,75,France
+PERPIGNAN,Perpignan,66,France
+POITIERS,Poitiers,86,France
+QUIMPER,Quimper,29,France
+REIMS,Reims,51,France
+RENNES,Rennes,35,France
+SAINT ETIENNE CHATEAUCREUX,Saint-Étienne Châteaucreux,42,France
+ST MALO,Saint-Malo,35,France
+ST PIERRE DES CORPS,Saint-Pierre-des-Corps,37,France
+STRASBOURG,Strasbourg,67,France
+STUTTGART,Stuttgart,,Allemagne
+TOULON,Toulon,83,France
+TOULOUSE MATABIAU,Toulouse Matabiau,31,France
+TOURCOING,Tourcoing,59,France
+TOURS,Tours,37,France
+VALENCE ALIXAN TGV,Valence TGV,26,France
+VANNES,Vannes,56,France
+ZURICH,Zurich,,Suisse
+ALBI/RODEZ,Albi / Rodez,81,France
+AMIENS,Amiens,80,France
+AURILLAC,Aurillac,15,France
+BAYONNE,Bayonne,64,France
+BELFORT,Belfort,90,France
+BORDEAUX-ST-JEAN,Bordeaux Saint-Jean,33,France
+BOULOGNE-VILLE,Boulogne Ville,62,France
+BOURG-ST-MAURICE/ST-GERVAIS,Bourg-Saint-Maurice / Saint-Gervais,73,France
+BOURGES,Bourges,18,France
+BRIANÇON,Briançon,05,France
+BRIANÇON/NICE-VILLE,Briançon / Nice Ville,05,France
+BRIVE/CAHORS,Brive / Cahors,19,France
+BÉZIERS,Béziers,34,France
+CAEN,Caen,14,France
+CAHORS/BRIVE,Cahors / Brive,46,France
+CAMBRAI/MAUBEUGE,Cambrai / Maubeuge,59,France
+CERBERE,Cerbère,66,France
+CERBERE/TOULOUSE,Cerbère / Toulouse,66,France
+CHERBOURG,Cherbourg,50,France
+CLERMONT-FERRAND,Clermont-Ferrand,63,France
+GRANVILLE,Granville,50,France
+HENDAYE,Hendaye,64,France
+HENDAYE/LOURDES,Hendaye / Lourdes,64,France
+LATOUR-DE-CAROL,Latour-de-Carol,66,France
+LE HAVRE,Le Havre,76,France
+LIMOGES,Limoges,87,France
+LOURDES/HENDAYE,Lourdes / Hendaye,65,France
+LYON,Lyon,69,France
+LYON-PART-DIEU,Lyon Part-Dieu,69,France
+MARSEILLE-ST-CHARLES,Marseille Saint-Charles,13,France
+MAUBEUGE,Maubeuge,59,France
+MAUBEUGE/CAMBRAI,Maubeuge / Cambrai,59,France
+MODANE,Modane,73,France
+NEVERS,Nevers,58,France
+NICE-VILLE,Nice Ville,06,France
+NÎMES,Nîmes,30,France
+ORLÉANS,Orléans,45,France
+PARIS-AUSTERLITZ,Paris Austerlitz,75,France
+PARIS-BERCY,Paris Bercy,75,France
+PARIS-EST,Paris Est,75,France
+PARIS-NORD,Paris Nord,75,France
+PARIS-ST-LAZARE,Paris Saint-Lazare,75,France
+PARIS-VAUGIRARD,Paris Vaugirard,75,France
+ROUEN,Rouen,76,France
+ROUEN-RIVE-DROITE,Rouen Rive-Droite,76,France
+ST-QUENTIN,Saint-Quentin,02,France
+TARBES,Tarbes,65,France
+TOULOUSE-MATABIAU,Toulouse Matabiau,31,France
+TOULOUSE-MATABIAU/CERBERE,Toulouse / Cerbère,31,France
+TOULOUSE-MATABIAU/RODEZ,Toulouse / Rodez,31,France
+TROUVILLE-DEAUVILLE,Trouville-Deauville,14,France
+TROYES,Troyes,10,France
+RODEZ/ALBI,Rodez / Albi,12,France

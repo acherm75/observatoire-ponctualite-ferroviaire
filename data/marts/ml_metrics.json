@@ -1,0 +1,25 @@
+{
+  "periode_test": "2025-01 → 2026-09",
+  "nb_observations_test": 3105,
+  "mae_xgboost_pts": 4.73,
+  "mae_mois_precedent_pts": 5.68,
+  "mae_moyenne_3_mois_pts": 5.39,
+  "importance_variables": {
+    "lag_1": 0.291,
+    "roll_3": 0.121,
+    "roll_12": 0.119,
+    "moyenne_liaison": 0.071,
+    "num_mois": 0.053,
+    "duree_moyenne_min": 0.037,
+    "normale_gel": 0.035,
+    "normale_chaleur": 0.035,
+    "log_trains": 0.035,
+    "delta_1": 0.034,
+    "lag_2": 0.03,
+    "lag_3": 0.03,
+    "lag_12": 0.03,
+    "est_international": 0.027,
+    "normale_pluie": 0.027,
+    "est_tgv": 0.026
+  }
+}

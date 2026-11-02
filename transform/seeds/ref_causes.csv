@@ -1,0 +1,7 @@
+code_cause,libelle_cause,responsable,ordre
+externe,"Causes externes (météo, obstacles, malveillance, mouvements sociaux…)",Hors SNCF,1
+infra,"Infrastructure (maintenance, travaux)",SNCF Réseau,2
+gestion_trafic,"Gestion du trafic (circulation, interactions entre réseaux)",SNCF Réseau,3
+materiel_roulant,Matériel roulant,Transporteur,4
+gestion_gare,"Gestion en gare et réutilisation de matériel",Gares & Connexions / Transporteur,5
+prise_en_charge_voyageurs,"Prise en compte des voyageurs (affluence, PSH, correspondances)",Transporteur,6

@@ -1,0 +1,52 @@
+name: Pipeline quotidien
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # tous les jours à 6 h UTC
+  workflow_dispatch:       # lancement manuel depuis l'onglet Actions
+  pull_request:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pipeline
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      # L'historique météo (1950-2024) ne change qu'une fois par an : on le met en cache.
+      - name: Cache de l'historique météo
+        uses: actions/cache@v4
+        with:
+          path: data/raw/meteo/meteo_previous_*.parquet
+          key: meteo-previous-v1
+
+      - name: Lancer le pipeline (ingestion -> dbt build -> ML -> export)
+        run: python pipeline.py
+
+      - name: Publier les données mises à jour
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/marts
+          if git diff --cached --quiet; then
+            echo "Aucune nouvelle donnée."
+          else
+            git commit -m "data: mise à jour automatique du $(date -u +%Y-%m-%d)"
+            git push
+          fi

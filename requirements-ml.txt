@@ -1,0 +1,5 @@
+# Exploration (notebook)
+-r requirements.txt
+jupyter
+plotly>=5.24
+statsmodels>=0.14

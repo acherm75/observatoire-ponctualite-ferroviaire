@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: stg_tgv_regularite
+    description: Régularité TGV nettoyée, une ligne par liaison et par mois.
+    data_tests:
+      - dbt_utils_unique_combination: {arguments: {columns: [mois, type_service, gare_depart_source, gare_arrivee_source]}}
+    columns:
+      - name: mois
+        data_tests: [not_null]
+      - name: nb_trains_prevus
+        data_tests: [not_null, {non_negative: {}}]
+      - name: causes_renseignees
+        description: Faux quand la source met toutes les causes à 0 (répartition inconnue).
+
+  - name: stg_intercites_regularite
+    data_tests:
+      - dbt_utils_unique_combination: {arguments: {columns: [mois, gare_depart_source, gare_arrivee_source]}}
+
+  - name: stg_ter_regularite
+    data_tests:
+      - dbt_utils_unique_combination: {arguments: {columns: [mois, region_source]}}
+    columns:
+      - name: region_source
+        data_tests:
+          - relationships: {arguments: {to: ref('ref_regions_ter'), field: region_source}}
+      - name: taux_regularite_source
+        data_tests:
+          - between: {arguments: {min: 0, max: 1}, config: {severity: warn}}
+
+  - name: stg_meteo_station_mois
+    columns:
+      - name: code_departement
+        data_tests:
+          - relationships: {arguments: {to: ref('ref_departements'), field: code_departement}}
+      - name: temperature_moy_c
+        data_tests:
+          - between: {arguments: {min: -30, max: 45}}

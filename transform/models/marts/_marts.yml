@@ -1,0 +1,97 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: Calendrier mensuel.
+    columns:
+      - name: mois
+        data_tests: [unique, not_null]
+
+  - name: dim_gare
+    description: Gares des liaisons TGV et Intercités, rattachées à leur département et région.
+    columns:
+      - name: gare_id
+        data_tests: [unique, not_null]
+      - name: region
+        data_tests:
+          - not_null: {config: {where: "not est_etranger"}}
+          - relationships: {arguments: {to: ref('dim_region'), field: region}}
+
+  - name: dim_liaison
+    description: Liaisons origine → destination, par activité (TGV, Intercités).
+    columns:
+      - name: liaison_id
+        data_tests: [unique, not_null]
+      - name: gare_depart_id
+        data_tests:
+          - relationships: {arguments: {to: ref('dim_gare'), field: gare_id}}
+      - name: gare_arrivee_id
+        data_tests:
+          - relationships: {arguments: {to: ref('dim_gare'), field: gare_id}}
+
+  - name: dim_region
+    columns:
+      - name: region
+        data_tests: [unique, not_null]
+
+  - name: dim_cause
+    columns:
+      - name: code_cause
+        data_tests: [unique, not_null]
+
+  - name: fct_regularite_liaison_mois
+    description: >
+      Régularité mensuelle par liaison TGV / Intercités. `taux_ponctualite` = 1 − trains en
+      retard à l'arrivée / trains ayant circulé. Laissé vide quand la ligne source est incohérente.
+    data_tests:
+      - dbt_utils_unique_combination: {arguments: {columns: [liaison_id, mois]}}
+    columns:
+      - name: liaison_id
+        data_tests:
+          - relationships: {arguments: {to: ref('dim_liaison'), field: liaison_id}}
+      - name: mois
+        data_tests:
+          - relationships: {arguments: {to: ref('dim_date'), field: mois}}
+      - name: taux_ponctualite
+        data_tests:
+          - between: {arguments: {min: 0, max: 1}}
+      - name: taux_annulation
+        data_tests:
+          - between: {arguments: {min: 0, max: 1}}
+      - name: meteo_precipitations_mm
+        description: Cumul mensuel moyen de pluie (mm) aux deux extrémités de la liaison.
+        data_tests:
+          - not_null: {config: {severity: warn}}
+
+  - name: fct_causes_retard_mois
+    description: Part de chaque cause dans les retards de plus de 15 min (TGV).
+    data_tests:
+      - dbt_utils_unique_combination: {arguments: {columns: [liaison_id, mois, code_cause]}}
+    columns:
+      - name: code_cause
+        data_tests:
+          - relationships: {arguments: {to: ref('dim_cause'), field: code_cause}}
+      - name: part_cause
+        data_tests:
+          - between: {arguments: {min: 0, max: 1}}
+
+  - name: fct_regularite_ter_mois
+    description: Régularité TER par région actuelle et par mois.
+    data_tests:
+      - dbt_utils_unique_combination: {arguments: {columns: [region, mois]}}
+    columns:
+      - name: region
+        data_tests:
+          - relationships: {arguments: {to: ref('dim_region'), field: region}}
+      - name: taux_ponctualite
+        data_tests:
+          - between: {arguments: {min: 0, max: 1}}
+
+  - name: fct_meteo_region_mois
+    data_tests:
+      - dbt_utils_unique_combination: {arguments: {columns: [region, mois]}}
+
+  - name: mart_ponctualite_nationale_mois
+    description: Ponctualité nationale par activité (TGV, Intercités, TER) et par mois.
+    data_tests:
+      - dbt_utils_unique_combination: {arguments: {columns: [activite, mois]}}

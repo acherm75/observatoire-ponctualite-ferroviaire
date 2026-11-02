@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Données brutes chargées par `ingestion/load_duckdb.py`.
+    tables:
+      - name: tgv_regularite
+        description: Régularité mensuelle TGV par liaison (source AQST / SNCF Voyageurs), depuis 2018.
+        loaded_at_field: _loaded_at
+        freshness:
+          warn_after: {count: 2, period: day}
+      - name: ter_regularite
+        description: Régularité mensuelle TER par région, depuis 2013.
+      - name: intercites_regularite
+        description: Régularité mensuelle Intercités par relation, depuis 2014.
+      - name: frequentation_gares
+        description: Fréquentation annuelle des gares (voyageurs), 2015 à 2024.
+      - name: meteo_mensuelle
+        description: Données climatologiques mensuelles par poste Météo-France.

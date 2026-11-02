@@ -1,0 +1,7 @@
+ponctualite:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', '../data/ponctualite.duckdb') }}"
+      threads: 4

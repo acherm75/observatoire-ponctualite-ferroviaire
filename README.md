@@ -22,6 +22,15 @@ prévision par machine learning et restitution (Streamlit et Power BI).
 
 Le détail est dans [`notebooks/exploration.ipynb`](notebooks/exploration.ipynb).
 
+## En direct : le trafic SNCF en temps réel
+
+L'onglet **🔴 En direct** complète les statistiques mensuelles par la situation du moment
+([`app/temps_reel.py`](app/temps_reel.py)) : part des trains en retard par activité (TGV, Intercités, TER,
+Transilien), plus gros retards en cours, prochains départs d'une gare avec voie et retard, et perturbations
+annoncées. Les données viennent des flux publics **SIRI Lite** de la SNCF diffusés par le Point d'accès national
+[transport.data.gouv.fr](https://transport.data.gouv.fr/datasets/horaires-sncf) (sans clé d'API),
+actualisés toutes les 2 minutes. Même définition du retard que les statistiques mensuelles (≥ 5 min).
+
 ## Assistant IA : poser une question en français
 
 L'onglet **🤖 Assistant IA** de l'app répond à des questions comme *« Quelles sont les 5 liaisons TGV les moins
@@ -50,6 +59,7 @@ flowchart LR
     M --> E[Export Parquet]
     ML --> E
     E --> ST[App Streamlit]
+    RT[SNCF temps réel<br/>SIRI Lite] --> ST
     E --> PBI[Power BI]
     GH[GitHub Actions<br/>chaque jour à 6 h] -.-> I
 ```
@@ -61,6 +71,7 @@ flowchart LR
 | Transformation | dbt (adaptateur `dbt-duckdb`) | Staging → intermediate → marts, tables de référence (seeds), tests génériques et singuliers |
 | ML | XGBoost, scikit-learn | Prévision du taux de retard par liaison pour le mois suivant, validée sur une période de test temporelle |
 | Restitution | Streamlit, Plotly, Power BI | App publique et rapport BI sur le même modèle de données |
+| Temps réel | Flux SIRI Lite SNCF (transport.data.gouv.fr), `xml.etree` | Trafic du moment, départs par gare, perturbations |
 | Assistant IA | LLM gratuit via API compatible OpenAI (Gemini, Groq ou Mistral), outil SQL | Questions en français traduites en SQL sur les marts |
 | Orchestration | GitHub Actions | Exécution quotidienne : tests dbt chaque jour, republication des données seulement si les sources SNCF ou le code ont changé (empreinte `scripts/fingerprint.py`) |
 
@@ -136,10 +147,11 @@ pipeline.py       point d'entrée unique
 ## Pistes suivantes
 
 - Jeu de questions de référence pour évaluer l'assistant (exactitude des chiffres renvoyés)
-- Perturbations en temps réel via l'API SNCF (Navitia)
+- Archiver chaque jour le flux temps réel pour mesurer la ponctualité au jour près
 - Granularité journalière de la météo pour isoler les épisodes extrêmes (canicules, tempêtes)
 
 ## Sources
 
 - [SNCF Open Data](https://ressources.data.sncf.com) : régularité mensuelle TGV (AQST), TER, Intercités ; fréquentation des gares. Licence ODbL.
 - [Météo-France, données climatologiques de base mensuelles](https://www.data.gouv.fr/fr/datasets/donnees-climatologiques-de-base-mensuelles/). Licence Etalab 2.0.
+- [SNCF, horaires et temps réel (SIRI Lite)](https://transport.data.gouv.fr/datasets/horaires-sncf), via le Point d'accès national transport.data.gouv.fr. Licence ODbL.

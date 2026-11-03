@@ -57,7 +57,7 @@ for col, act in zip(cols, ["TGV", "TER", "Intercités"]):
     col.metric(f"{act} · {m:%m/%Y}", pct(cur), delta)
 
 onglets = st.tabs(["Tendance", "Liaisons", "Causes des retards", "Régions TER", "Effet météo", "Prévisions",
-                   "🤖 Assistant IA"])
+                   "🔴 En direct", "🤖 Assistant IA"])
 
 # ---------------------------------------------------------------- tendance
 with onglets[0]:
@@ -222,7 +222,113 @@ EXEMPLES = [
     "Les mois de canicule sont-ils moins ponctuels pour les TER ?",
 ]
 
+# ---------------------------------------------------------------- temps réel
+@st.cache_data(ttl=120, show_spinner="Récupération du trafic en temps réel…")
+def trafic_direct():
+    sys.path.insert(0, str(Path(__file__).parent))
+    import temps_reel
+    return temps_reel.charger_trains()
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def perturbations_direct():
+    sys.path.insert(0, str(Path(__file__).parent))
+    import temps_reel
+    return temps_reel.charger_perturbations()
+
+
+@st.fragment
+def onglet_direct():
+    try:
+        trains, arrets, horodatage = trafic_direct()
+    except Exception:
+        st.warning("Le flux temps réel SNCF est momentanément indisponible. Réessaie dans quelques minutes.")
+        return
+    if trains.empty:
+        st.info("Aucun train en circulation n'est publié dans le flux pour l'instant.")
+        return
+
+    gauche, droite = st.columns([4, 1])
+    gauche.caption(f"Situation à {horodatage:%H:%M} (heure de Paris), actualisée toutes les 2 minutes. "
+                   "Source : flux SIRI Lite SNCF du Point d'accès national transport.data.gouv.fr. "
+                   "Retard = retard estimé à l'arrivée au terminus (≥ 5 min, comme les statistiques mensuelles).")
+    if droite.button("Actualiser", width="stretch"):
+        trafic_direct.clear()
+        st.rerun(scope="fragment")
+
+    suivis = trains[trains["categorie"] != "Autre"]
+    roulants = suivis[~suivis["supprime"]]
+    k = st.columns(4)
+    k[0].metric("Trains suivis", f"{len(suivis):,}".replace(",", " "))
+    k[1].metric("À l'heure (estimé)", pct(1 - roulants["en_retard"].mean()))
+    k[2].metric("Trains supprimés", int(suivis["supprime"].sum()))
+    k[3].metric("Retard moyen des trains en retard",
+                f"{roulants.loc[roulants['en_retard'], 'retard_terminus_min'].mean():.0f} min")
+
+    g, d = st.columns(2)
+    with g:
+        par_cat = (roulants.groupby("categorie")
+                   .agg(trains=("id_train", "size"), en_retard=("en_retard", "mean")).reset_index()
+                   .sort_values("en_retard"))
+        fig = px.bar(par_cat, x="en_retard", y="categorie", orientation="h", text_auto=".0%",
+                     hover_data={"trains": True}, labels={"en_retard": "Part des trains en retard", "categorie": ""},
+                     title="Trains en retard en ce moment, par activité")
+        fig.update_layout(xaxis_tickformat=".0%", height=320, margin=dict(l=0, r=0, t=40, b=0))
+        st.plotly_chart(fig, width="stretch")
+    with d:
+        st.markdown("**Plus gros retards en cours**")
+        top = (roulants.nlargest(8, "retard_terminus_min")
+               .assign(train=lambda x: x["categorie"].str.replace(" / RER", "") + " " + x["numero"],
+                       trajet=lambda x: x["origine"] + " → " + x["destination"],
+                       retard=lambda x: x["retard_terminus_min"].round().astype(int).astype(str) + " min"))
+        st.dataframe(top[["train", "trajet", "retard"]], hide_index=True, width="stretch")
+
+    st.subheader("Prochains départs d'une gare")
+    maintenant = pd.Timestamp.now(tz="Europe/Paris")
+    departs = arrets[arrets["depart_prevu"].notna() & ~arrets["deja_passe"]
+                     & (arrets["depart_prevu"] >= maintenant - pd.Timedelta(minutes=10))]
+    gares = departs["gare"].value_counts()
+    if gares.empty:
+        st.info("Aucun départ à venir dans le flux.")
+    else:
+        liste = sorted(gares.index)
+        defaut = next((g for g in liste if g.startswith("Paris - Gare de Lyon - Hall")), gares.index[0])
+        gare = st.selectbox("Gare", liste, index=liste.index(defaut))
+        tableau = (departs[departs["gare"] == gare].sort_values("depart_prevu").head(15)
+                   .assign(heure=lambda x: x["depart_prevu"].dt.strftime("%H:%M"),
+                           train=lambda x: x["categorie"].str.replace(" / RER", "") + " " + x["numero"],
+                           etat=lambda x: x.apply(
+                               lambda r: "❌ supprimé" if r["arret_supprime"]
+                               else f"⚠️ +{r['retard_depart_min']:.0f} min" if (r["retard_depart_min"] or 0) >= SEUIL_DIRECT
+                               else "✅ à l'heure", axis=1)))
+        st.dataframe(tableau[["heure", "train", "destination", "quai", "etat"]].fillna({"quai": "—"}).rename(columns={
+            "heure": "Départ prévu", "train": "Train", "destination": "Destination", "quai": "Voie", "etat": "État"}),
+            hide_index=True, width="stretch")
+        st.caption("Seuls les trains publiés dans le flux temps réel apparaissent : la liste peut être incomplète.")
+
+    with st.expander("Perturbations annoncées (travaux, incidents)"):
+        try:
+            pert = perturbations_direct()
+        except Exception:
+            pert = pd.DataFrame()
+        pert = pert[pert["description"].str.len() > 0] if not pert.empty else pert
+        if pert.empty:
+            st.write("Aucune perturbation disponible.")
+        else:
+            recherche = st.text_input("Filtrer (gare, ligne…)", placeholder="ex. Thionville")
+            if recherche:
+                pert = pert[pert["description"].str.contains(recherche, case=False, regex=False)]
+            st.caption(f"{len(pert)} message(s) en vigueur.")
+            for _, r in pert.head(30).iterrows():
+                st.markdown(f"- **{r['resume']}** {r['description']}")
+
+
+SEUIL_DIRECT = 5
+
 with onglets[6]:
+    onglet_direct()
+
+with onglets[7]:
     fournisseur = secret("ASSISTANT_FOURNISSEUR", "gemini")
     cle = secret("ASSISTANT_CLE_API")
     quota_session = int(secret("ASSISTANT_QUESTIONS_PAR_SESSION", 10))
@@ -300,4 +406,4 @@ with onglets[6]:
 
 st.divider()
 st.caption("Sources : SNCF Open Data (ressources.data.sncf.com), Météo-France (meteo.data.gouv.fr). "
-           "Pipeline : Python → DuckDB → dbt → XGBoost → Streamlit · Assistant IA : modèle gratuit (Gemini, Groq ou Mistral).")
+           "Temps réel : SNCF SIRI Lite (transport.data.gouv.fr). Pipeline : Python → DuckDB → dbt → XGBoost → Streamlit · Assistant IA : modèle gratuit (Gemini, Groq ou Mistral).")

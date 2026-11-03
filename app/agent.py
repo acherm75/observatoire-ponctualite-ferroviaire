@@ -31,7 +31,7 @@ ATTENTES_QUOTA_MAX = 3   # attentes autorisées quand la limite gratuite par min
 # Fournisseurs à offre gratuite (API compatibles OpenAI). Le modèle reste modifiable dans les secrets.
 FOURNISSEURS = {
     "gemini":  {"base_url": "https://generativelanguage.googleapis.com/v1beta/openai/", "modele": "gemini-3.5-flash-lite,gemini-flash-lite-latest,gemini-3.5-flash"},
-    "groq":    {"base_url": "https://api.groq.com/openai/v1", "modele": "openai/gpt-oss-120b,llama-3.3-70b-versatile"},
+    "groq":    {"base_url": "https://api.groq.com/openai/v1", "modele": "qwen/qwen3.8-27b,openai/gpt-oss-120b"},
     "mistral": {"base_url": "https://api.mistral.ai/v1", "modele": "mistral-small-latest"},
 }
 
@@ -189,7 +189,9 @@ class AssistantPonctualite:
                     openai.NotFoundError, openai.AuthenticationError, openai.PermissionDeniedError) as e:
                 raise QuotaEpuise(modele) from e  # modèle saturé, lent, retiré ou clé refusée
             except openai.BadRequestError as e:
-                if "tool_use_failed" in str(e):  # Groq : appel d'outil mal formé par le modèle
+                # Groq : appel d'outil mal formé par le modèle ; Gemini : clé refusée (renvoyée en 400)
+                detail = f"{e} {e.body}".lower()
+                if "tool_use_failed" in detail or "api key" in detail:
                     raise QuotaEpuise(modele) from e
                 raise
 

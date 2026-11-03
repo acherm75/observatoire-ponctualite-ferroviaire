@@ -35,7 +35,7 @@ Pourquoi du text-to-SQL plutôt qu'un RAG sur des documents : les questions port
 sur les données exactes est vérifiable, là où un RAG paraphraserait des extraits.
 
 Garde-fous : base en mémoire verrouillée (aucun accès disque ni réseau), une seule instruction `SELECT` par appel,
-délai max de 10 s, 6 étapes max par question ; quotas par visite et par jour pour rester dans les limites gratuites du fournisseur, et relais automatique vers un autre modèle quand le quota du jour d'un modèle est épuisé.
+délai max de 10 s, 6 étapes max par question ; quotas par visite et par jour pour rester dans les limites gratuites du fournisseur, et relais automatique vers un autre modèle, puis vers un second fournisseur gratuit (ex. Groq), quand le quota d'un modèle est épuisé ou le service indisponible.
 
 ## Architecture
 

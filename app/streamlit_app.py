@@ -203,10 +203,10 @@ def secret(nom: str, defaut=None):
 
 
 @st.cache_resource
-def assistant(fournisseur: str, cle: str, modele: str | None):
+def assistant(fournisseurs: tuple):
     sys.path.insert(0, str(Path(__file__).parent))
     from agent import creer_assistant
-    return creer_assistant(MARTS, fournisseur, cle, modele)
+    return creer_assistant(MARTS, list(fournisseurs))
 
 
 @st.cache_resource
@@ -233,7 +233,12 @@ with onglets[6]:
     if not cle:
         st.info("L'assistant n'est pas configuré : ajoute `ASSISTANT_CLE_API` dans les secrets de l'app.")
     else:
-        bot = assistant(fournisseur, cle, secret("ASSISTANT_MODELE"))
+        bot = assistant((
+            (fournisseur, cle, secret("ASSISTANT_MODELE")),
+            # Relais optionnel chez un autre fournisseur gratuit quand le premier est à court de quota
+            (secret("ASSISTANT_SECOURS_FOURNISSEUR", "groq"), secret("ASSISTANT_SECOURS_CLE_API"),
+             secret("ASSISTANT_SECOURS_MODELE")),
+        ))
         ss = st.session_state
         ss.setdefault("chat", [])        # [{"question", "reponse"}]
         ss.setdefault("nb_questions", 0)

@@ -31,7 +31,7 @@ ATTENTES_QUOTA_MAX = 3   # attentes autorisées quand la limite gratuite par min
 # Fournisseurs à offre gratuite (API compatibles OpenAI). Le modèle reste modifiable dans les secrets.
 FOURNISSEURS = {
     "gemini":  {"base_url": "https://generativelanguage.googleapis.com/v1beta/openai/", "modele": "gemini-3.5-flash-lite,gemini-flash-lite-latest,gemini-3.5-flash"},
-    "groq":    {"base_url": "https://api.groq.com/openai/v1", "modele": "llama-3.3-70b-versatile"},
+    "groq":    {"base_url": "https://api.groq.com/openai/v1", "modele": "openai/gpt-oss-120b,llama-3.3-70b-versatile"},
     "mistral": {"base_url": "https://api.mistral.ai/v1", "modele": "mistral-small-latest"},
 }
 
@@ -165,31 +165,39 @@ class QuotaEpuise(Exception):
 
 
 class AssistantPonctualite:
-    def __init__(self, base: BaseLectureSeule, client: openai.OpenAI, modeles: list[str]):
+    def __init__(self, base: BaseLectureSeule, chaine: list[tuple[openai.OpenAI, str]]):
         self.base = base
-        self.client = client
-        self.modeles = modeles  # par ordre de préférence ; on passe au suivant si le quota est épuisé
+        # (client, modèle) par ordre de préférence, éventuellement chez plusieurs fournisseurs :
+        # on passe au suivant si le quota est épuisé ou le service indisponible.
+        self.chaine = chaine
         self.system = SYSTEM_TEMPLATE.format(notes=NOTES_METIER, schema=base.schema)
 
-    def _appel(self, modele: str, messages: list):
+    @staticmethod
+    def _appel(client: openai.OpenAI, modele: str, messages: list):
         """Un appel au modèle. Limite par minute : on attend. Quota du jour ou panne : QuotaEpuise."""
         for tentative in range(ATTENTES_QUOTA_MAX + 1):
             try:
-                return self.client.chat.completions.create(
+                return client.chat.completions.create(
                     model=modele, messages=messages, tools=[OUTIL_SQL], temperature=0)
             except openai.RateLimitError as e:
-                attente = re.search(r"retry in ([\d.]+)s", str(e.body or e))
+                # Gemini : « retry in 7.5s » ; Groq : « try again in 7.5s » (ou « in 12m3s » pour le quota du jour).
+                attente = re.search(r"(?:retry|try again) in ([\d.]+)s", str(e.body or e))
                 if not attente or tentative == ATTENTES_QUOTA_MAX:
-                    raise QuotaEpuise(modele) from e  # pas de délai indiqué = quota du jour
+                    raise QuotaEpuise(modele) from e  # pas de délai court = quota du jour
                 time.sleep(min(float(attente.group(1)) + 1, 30))
-            except (openai.InternalServerError, openai.APITimeoutError, openai.NotFoundError) as e:
-                raise QuotaEpuise(modele) from e  # modèle saturé (503), lent ou retiré
+            except (openai.InternalServerError, openai.APITimeoutError, openai.APIConnectionError,
+                    openai.NotFoundError, openai.AuthenticationError, openai.PermissionDeniedError) as e:
+                raise QuotaEpuise(modele) from e  # modèle saturé, lent, retiré ou clé refusée
+            except openai.BadRequestError as e:
+                if "tool_use_failed" in str(e):  # Groq : appel d'outil mal formé par le modèle
+                    raise QuotaEpuise(modele) from e
+                raise
 
     def repondre(self, question: str, historique: list | None = None) -> Reponse:
         derniere_erreur = None
-        for modele in self.modeles:
+        for client, modele in self.chaine:
             try:
-                rep = self._repondre_avec(modele, question, historique)
+                rep = self._repondre_avec(client, modele, question, historique)
                 rep.modele = modele
                 return rep
             except QuotaEpuise as e:
@@ -198,12 +206,12 @@ class AssistantPonctualite:
                 derniere_erreur = e
         raise derniere_erreur
 
-    def _repondre_avec(self, modele: str, question: str, historique: list | None) -> Reponse:
+    def _repondre_avec(self, client: openai.OpenAI, modele: str, question: str, historique: list | None) -> Reponse:
         messages = ([{"role": "system", "content": self.system}] + list(historique or [])
                     + [{"role": "user", "content": question}])
         rep = Reponse(texte="")
         for _ in range(MAX_TOURS):
-            r = self._appel(modele, messages)
+            r = self._appel(client, modele, messages)
             if r.usage:
                 rep.tokens_entree += r.usage.prompt_tokens or 0
                 rep.tokens_sortie += r.usage.completion_tokens or 0
@@ -242,10 +250,17 @@ class AssistantPonctualite:
         return rep
 
 
-def creer_assistant(dossier_marts: Path, fournisseur: str, cle: str, modeles: str | None = None) -> AssistantPonctualite:
-    """`modeles` : un nom ou une liste séparée par des virgules, par ordre de préférence."""
+def _chaine(fournisseur: str, cle: str, modeles: str | None) -> list[tuple[openai.OpenAI, str]]:
     conf = FOURNISSEURS[fournisseur]
     # Pas de nouvelle tentative automatique du SDK : on gère nous-mêmes les quotas.
     client = openai.OpenAI(api_key=cle, base_url=conf["base_url"], max_retries=0, timeout=60)
-    liste = [m.strip() for m in (modeles or conf["modele"]).split(",") if m.strip()]
-    return AssistantPonctualite(BaseLectureSeule(dossier_marts), client, liste)
+    return [(client, m.strip()) for m in (modeles or conf["modele"]).split(",") if m.strip()]
+
+
+def creer_assistant(dossier_marts: Path, fournisseurs: list[tuple[str, str, str | None]]) -> AssistantPonctualite:
+    """`fournisseurs` : [(nom, clé, modèles)] par ordre de préférence ; `modèles` est un nom ou une
+    liste séparée par des virgules (None = modèles par défaut du fournisseur)."""
+    chaine = [lien for nom, cle, modeles in fournisseurs if cle for lien in _chaine(nom, cle, modeles)]
+    if not chaine:
+        raise ValueError("Aucun fournisseur d'IA configuré.")
+    return AssistantPonctualite(BaseLectureSeule(dossier_marts), chaine)

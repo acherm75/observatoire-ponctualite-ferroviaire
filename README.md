@@ -1,6 +1,6 @@
 # 🚆 Observatoire de la ponctualité ferroviaire en France
 
-[![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ponctualite-ferroviaire.streamlit.app/) [![Pipeline quotidien](https://github.com/acherm75/observatoire-ponctualite-ferroviaire/actions/workflows/pipeline.yml/badge.svg)](https://github.com/acherm75/observatoire-ponctualite-ferroviaire/actions/workflows/pipeline.yml)
+[![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ponctualite-ferroviaire.streamlit.app/) [![Pipeline quotidien](https://github.com/acherm75/observatoire-ponctualite-ferroviaire/actions/workflows/pipeline.yml/badge.svg)](https://github.com/acherm75/observatoire-ponctualite-ferroviaire/actions/workflows/pipeline.yml) [![Tests](https://github.com/acherm75/observatoire-ponctualite-ferroviaire/actions/workflows/tests.yml/badge.svg)](https://github.com/acherm75/observatoire-ponctualite-ferroviaire/actions/workflows/tests.yml)
 
 Pipeline data de bout en bout, construit uniquement sur des **données ouvertes** (SNCF Open Data et Météo-France) :
 ingestion automatisée, entrepôt analytique, modélisation en étoile avec dbt, tests de qualité, analyse exploratoire,
@@ -109,6 +109,23 @@ Les tests dbt ont fait remonter des anomalies réelles dans les sources :
 | Mai 2026 : rupture brutale dans la répartition des causes | Signalée dans l'analyse et dans l'app (probable changement de nomenclature) |
 | Régions TER publiées selon l'ancien puis le nouveau découpage, et lots ouverts à la concurrence en 2025 | Table de correspondance vers les 13 régions actuelles |
 | Noms de gares différents selon les jeux (`PARIS-EST` / `PARIS EST`) | Normalisation (macro dbt) et référentiel des gares |
+
+## Tests
+
+Deux niveaux de contrôle, lancés automatiquement par GitHub Actions :
+
+- **Données** : 60 tests dbt (unicité, relations, valeurs plausibles, causes qui somment à 100 %) à chaque exécution du pipeline.
+- **Code** : 52 tests `pytest` ([`tests/`](tests/)) à chaque push, sans réseau ni clé d'API :
+  - *assistant IA* : seules les requêtes `SELECT` passent (écriture, `ATTACH`, `COPY`, `SET`… refusés), aucun accès disque même via `read_parquet`, délai max, troncature ; boucle de l'agent avec un faux modèle (correction après erreur SQL, limite d'étapes, relais vers le modèle suivant quand le quota est épuisé) ;
+  - *temps réel* : lecture d'extraits SIRI Lite (retard au terminus, seuil de 5 min aux bornes, suppressions totales ou partielles, perturbations en cours, texte nettoyé du HTML) ;
+  - *prévision* : **aucune fuite d'information du futur** — modifier un mois et les suivants ne change aucune variable de ce mois.
+
+  Les tests ont été validés par mutation : en réintroduisant volontairement une fuite, en rouvrant l'accès disque ou en décalant le seuil de retard, au moins un test échoue.
+
+```bash
+pip install -r requirements-dev.txt
+pytest tests
+```
 
 ## Lancer le projet
 

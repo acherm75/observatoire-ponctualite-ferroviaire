@@ -1,0 +1,4 @@
+# Tests (pytest) : pipeline + dépendances de l'app nécessaires aux modules testés
+-r requirements.txt
+openai>=1.50
+pytest>=8

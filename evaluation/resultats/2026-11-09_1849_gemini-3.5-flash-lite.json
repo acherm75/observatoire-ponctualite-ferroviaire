@@ -1,0 +1,671 @@
+[
+  {
+    "id": "q01",
+    "categorie": "national",
+    "question": "Quelle a été la ponctualité moyenne des TGV en 2025 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "84,9 %",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2025 (de janvier à décembre), la ponctualité moyenne des TGV s'est établie à **84,9 %** (sur un total de 434 624 trains ayant circulé).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT \n    ROUND(100.0 * (1.0 - SUM(nb_trains_retard_arrivee) / SUM(nb_trains_circules)), 1) AS taux_ponctualite,\n    SUM(nb_trains_circules) AS total_circules,\n    MIN(mois) AS debut_periode,\n    MAX(mois) AS fin_periode\nFROM fct_regularite_liaison_mois\nWHERE activite = 'TGV'\n  AND est_incoherent = false\n  AND EXTRACT(YEAR FROM mois) = 2025;",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4514,
+    "duree_s": 2.6
+  },
+  {
+    "id": "q02",
+    "categorie": "national",
+    "question": "Quel est le taux de ponctualité des TER sur l'année 2025 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "91,3 %",
+        "ok": true
+      }
+    ],
+    "reponse": "Sur l'année 2025 (de janvier à décembre 2025), le taux de ponctualité des TER s'élève à **91,3 %** (calculé sur un total de 2 636 154 trains circulés).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT \n    sum(nb_trains_circules - nb_trains_retard_arrivee) * 100.0 / sum(nb_trains_circules) AS taux_ponctualite,\n    sum(nb_trains_circules) as total_circules,\n    min(mois) as min_mois,\n    max(mois) as max_mois\nFROM fct_regularite_ter_mois\nWHERE extract(year from mois) = 2025",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4492,
+    "duree_s": 2.1
+  },
+  {
+    "id": "q03",
+    "categorie": "national",
+    "question": "Les Intercités étaient-ils ponctuels en 2025 ? Donne le taux.",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "84,0 %",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2025, les trains Intercités ont enregistré un taux de ponctualité de 84,0 % (sur un total de 28 655 trains ayant circulé sur la période).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT \n    sum(nb_trains_circules) - sum(nb_trains_retard_arrivee) AS trains_ponctuels,\n    sum(nb_trains_circules) AS trains_circules,\n    ROUND(100.0 * (sum(nb_trains_circules) - sum(nb_trains_retard_arrivee)) / sum(nb_trains_circules), 1) AS taux_ponctualite\nFROM mart_ponctualite_nationale_mois\nWHERE activite = 'Intercités' AND EXTRACT(YEAR FROM mois) = 2025;",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4500,
+    "duree_s": 1.9
+  },
+  {
+    "id": "q04",
+    "categorie": "comparaison",
+    "question": "En 2024, les TER étaient-ils plus ponctuels que les TGV ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "86,3 %",
+        "ok": true
+      },
+      {
+        "attendu": "91,7 %",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2024, les TER ont été nettement plus ponctuels que les TGV. \n\nSur l'ensemble de l'année 2024 :\n- Les **TER** ont atteint un taux de ponctualité de **91,7 %** (pour 2 563 681 trains circulés).\n- Les **TGV** ont affiché un taux de ponctualité de **86,3 %** (pour 439 992 trains circulés).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "\nSELECT \n    activite,\n    sum(nb_trains_circules) as circules,\n    sum(nb_trains_circules - nb_trains_retard_arrivee) as ponctuels,\n    round(100.0 * sum(nb_trains_circules - nb_trains_retard_arrivee) / sum(nb_trains_circules), 1) as taux_ponctualite\nFROM (\n    SELECT 'TER' as activite, nb_trains_circules, nb_trains_retard_arrivee\n    FROM fct_regularite_ter_mois\n    WHERE extract(year from mois) = 2024\n    UNION ALL\n    SELECT activite, nb_trains_circules, nb_trains_retard_arrivee\n    FROM fct_regularite_liaison_mois\n    WHERE activite = 'TGV' AND extract(year from mois) = 2024 AND NOT est_incoherent\n)\nGROUP BY activite\n",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4790,
+    "duree_s": 2.3
+  },
+  {
+    "id": "q05",
+    "categorie": "comparaison",
+    "question": "La ponctualité des TGV s'est-elle améliorée entre 2019 et 2025 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "86,2 %",
+        "ok": true
+      },
+      {
+        "attendu": "84,9 %",
+        "ok": true
+      }
+    ],
+    "reponse": "Entre 2019 et 2025, la ponctualité annuelle des TGV a connu des fluctuations sans afficher d'amélioration nette sur l'ensemble de la période. Elle s'établit à **86,2 %** en 2019, atteint un pic à **88,7 %** en 2021 (marqué par les impacts de la crise sanitaire sur le trafic), avant de redescendre à **84,9 %** en 2025. Hors période Covid, le taux oscille globalement entre 84,9 % et 86,3 %.",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT \n    EXTRACT(YEAR FROM mois) AS annee,\n    ROUND(100.0 * (1 - SUM(nb_trains_retard_arrivee) / SUM(nb_trains_circules)), 1) AS taux_ponctualite,\n    SUM(nb_trains_circules) AS total_circules\nFROM mart_ponctualite_nationale_mois\nWHERE activite = 'TGV'\n  AND EXTRACT(YEAR FROM mois) BETWEEN 2019 AND 2025\nGROUP BY annee\nORDER BY annee;",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4782,
+    "duree_s": 2.4
+  },
+  {
+    "id": "q06",
+    "categorie": "national",
+    "question": "Combien de trains TGV ont circulé en 2025 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "434 624",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2025, un total de 434 624 trains TGV ont circulé sur l'ensemble du réseau national.",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT sum(nb_trains_circules) AS total_circules FROM mart_ponctualite_nationale_mois WHERE activite = 'TGV' AND EXTRACT(YEAR FROM mois) = 2025;",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4222,
+    "duree_s": 2.0
+  },
+  {
+    "id": "q07",
+    "categorie": "national",
+    "question": "Quel a été le taux d'annulation des TER en 2025 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "2,4 %",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2025, le taux d'annulation des TER s'est élevé à **2,4 %** (sur un total de 2 680 004 trains prévus et 64 423 annulés).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT sum(nb_trains_annules) / sum(nb_trains_prevus) * 100 AS taux_annulation, sum(nb_trains_prevus) as prevus, sum(nb_trains_annules) as annules FROM fct_regularite_ter_mois WHERE extract(year from mois) = 2025",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4334,
+    "duree_s": 1.8
+  },
+  {
+    "id": "q08",
+    "categorie": "classement",
+    "question": "Quelles sont les 5 liaisons TGV nationales les moins ponctuelles en 2025 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "Mâcon Loché → Paris Gare de Lyon",
+        "ok": true
+      },
+      {
+        "attendu": "Chambéry Challes-les-Eaux → Paris Gare de Lyon",
+        "ok": true
+      },
+      {
+        "attendu": "Lyon Part-Dieu → Marne-la-Vallée Chessy",
+        "ok": true
+      },
+      {
+        "attendu": "Lyon Part-Dieu → Lille",
+        "ok": true
+      },
+      {
+        "attendu": "Lyon Part-Dieu → Montpellier",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2025, les 5 liaisons TGV nationales affichant les plus taux de ponctualité les plus bas sont :\n\n1. **Mâcon Loché → Paris Gare de Lyon** : **69,4 %** de ponctualité (775 retards sur 2 534 trains circulés)\n2. **Chambéry Challes-les-Eaux → Paris Gare de Lyon** : **71,1 %** (802 retards sur 2 775 trains)\n3. **Lyon Part-Dieu → Marne-la-Vallée Chessy** : **73,2 %** (1 112 retards sur 4 143 trains)\n4. **Lyon Part-Dieu → Lille** : **74,5 %** (1 030 retards sur 4 034 trains)\n5. **Lyon Part-Dieu → Montpellier** : **76,4 %** (766 retards sur 3 242 trains)",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT l.libelle_liaison, \n       SUM(f.nb_trains_circules) AS circules, \n       SUM(f.nb_trains_retard_arrivee) AS retards,\n       ROUND(100.0 * (1.0 - SUM(f.nb_trains_retard_arrivee) / SUM(f.nb_trains_circules)), 1) AS taux_ponctualite\nFROM fct_regularite_liaison_mois f\nJOIN dim_liaison l ON f.liaison_id = l.liaison_id\nWHERE f.activite = 'TGV'\n  AND l.type_service = 'National'\n  AND NOT f.est_incoherent\n  AND EXTRACT(YEAR FROM f.mois) = 2025\nGROUP BY l.libelle_liaison\nHAVING SUM(f.nb_trains_circules) > 0\nORDER BY taux_ponctualite ASC\nLIMIT 5;",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 5064,
+    "duree_s": 2.3
+  },
+  {
+    "id": "q09",
+    "categorie": "classement",
+    "question": "Quelle liaison TGV nationale a été la plus ponctuelle en 2025, et avec quel taux ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "Strasbourg → Nantes",
+        "ok": true
+      },
+      {
+        "attendu": "92,1 %",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2025, la liaison TGV nationale la plus ponctuelle a été **Strasbourg → Nantes** avec un taux de ponctualité de **92,1 %** (sur la base de 673 trains ayant circulé sur la période).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "\nSELECT \n    l.libelle_liaison,\n    SUM(f.nb_trains_circules) AS circules,\n    SUM(f.nb_trains_circules - f.nb_trains_retard_arrivee) AS ponctuels,\n    ROUND(100.0 * SUM(f.nb_trains_circules - f.nb_trains_retard_arrivee) / SUM(f.nb_trains_circules), 1) AS taux_ponctualite\nFROM fct_regularite_liaison_mois f\nJOIN dim_liaison l ON f.liaison_id = l.liaison_id\nWHERE f.activite = 'TGV'\n  AND l.type_service = 'National'\n  AND NOT f.est_incoherent\n  AND EXTRACT(YEAR FROM f.mois) = 2025\nGROUP BY l.libelle_liaison\nHAVING SUM(f.nb_trains_circules) >= 100\nORDER BY taux_ponctualite DESC\nLIMIT 1;\n",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4739,
+    "duree_s": 2.6
+  },
+  {
+    "id": "q10",
+    "categorie": "liaison",
+    "question": "Quelle a été la ponctualité du TGV Paris Gare de Lyon → Lyon Part-Dieu en 2025 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "90,5 %",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2025 (de janvier à décembre), la ponctualité du TGV sur la liaison Paris Gare de Lyon → Lyon Part-Dieu a été de **90,5 %** (calculée sur un total de 7 754 trains ayant circulé).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "\nSELECT \n    sum(f.nb_trains_circules - f.nb_trains_retard_arrivee) * 100.0 / sum(f.nb_trains_circules) AS taux_ponctualite,\n    sum(f.nb_trains_circules) as total_circules,\n    min(f.mois) as debut_periode,\n    max(f.mois) as fin_periode\nFROM fct_regularite_liaison_mois f\nJOIN dim_liaison l ON f.liaison_id = l.liaison_id\nWHERE l.libelle_liaison ILIKE '%Paris Gare de Lyon%Lyon Part-Dieu%'\n  AND f.activite = 'TGV'\n  AND extract(year from f.mois) = 2025\n  AND NOT f.est_incoherent;\n",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4693,
+    "duree_s": 2.3
+  },
+  {
+    "id": "q11",
+    "categorie": "piège",
+    "question": "Quel a été le retard moyen des TGV arrivés en retard en 2025, en minutes ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "38,4",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2025, le retard moyen des TGV arrivés en retard s'est établi à **38,4 min** (sur un total de 65 412 trains en retard parmi les 434 624 trains ayant circulé sur la période).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT \n    sum(retard_moyen_trains_retard_min * nb_trains_retard_arrivee) / sum(nb_trains_retard_arrivee) AS retard_moyen_pondere,\n    sum(nb_trains_circules) AS total_circules,\n    sum(nb_trains_retard_arrivee) AS total_retard\nFROM fct_regularite_liaison_mois\nWHERE activite = 'TGV'\n  AND est_incoherent = false\n  AND extract(year from mois) = 2025;\n",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4532,
+    "duree_s": 2.1
+  },
+  {
+    "id": "q12",
+    "categorie": "national",
+    "question": "Quelle part des TGV a eu plus d'une heure de retard en 2025 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "3,1 %",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2025, **3,1 %** des TGV ayant circulé ont enregistré un retard de plus d'une heure à l'arrivée (sur l'ensemble de l'année).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT \n    sum(nb_trains_retard_sup_60) / sum(nb_trains_circules) * 100 AS part_retard_60\nFROM fct_regularite_liaison_mois\nWHERE activite = 'TGV'\n  AND est_incoherent = false\n  AND extract(year FROM mois) = 2025;",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4337,
+    "duree_s": 2.3
+  },
+  {
+    "id": "q13",
+    "categorie": "classement",
+    "question": "Quelle région a les TER les moins ponctuels en 2025 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "Occitanie",
+        "ok": true
+      },
+      {
+        "attendu": "86,6 %",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2025, la région avec les TER les moins ponctuels est l'**Occitanie**, avec un taux de ponctualité de **86,6 %**. \n\nÀ titre de comparaison, les régions suivantes les moins ponctuelles sur la même période sont la Nouvelle-Aquitaine (**89,8 %**) et Provence-Alpes-Côte d'Azur (**89,9 %**).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT region, sum(nb_trains_retard_arrivee) as retard, sum(nb_trains_circules) as circules, (1.0 - sum(nb_trains_retard_arrivee)/sum(nb_trains_circules))*100 as taux_ponctualite FROM fct_regularite_ter_mois WHERE extract(year from mois) = 2025 GROUP BY region ORDER BY taux_ponctualite ASC LIMIT 1",
+        "erreur": null
+      },
+      {
+        "sql": "SELECT region, (1.0 - sum(nb_trains_retard_arrivee)/sum(nb_trains_circules))*100 as taux_ponctualite, sum(nb_trains_circules) as circules FROM fct_regularite_ter_mois WHERE extract(year from mois) = 2025 GROUP BY region ORDER BY taux_ponctualite ASC",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 2,
+    "nb_erreurs_sql": 0,
+    "tokens": 7362,
+    "duree_s": 3.5
+  },
+  {
+    "id": "q14",
+    "categorie": "comparaison",
+    "question": "La ponctualité des TER en Bretagne a-t-elle évolué entre 2019 et 2025 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "95,8 %",
+        "ok": true
+      },
+      {
+        "attendu": "94,8 %",
+        "ok": true
+      }
+    ],
+    "reponse": "Entre 2019 et 2025, la ponctualité des TER en Bretagne a connu une légère baisse, passant de **95,8 %** en 2019 à **94,8 %** en 2025. \n\nVoici l'évolution détaillée par année :\n- **2019** : 95,8 %\n- **2020** : 95,7 %\n- **2021** : 95,8 %\n- **2022** : 95,6 %\n- **2023** : 94,6 %\n- **2024** : 95,2 %\n- **2025** : 94,8 %",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "\nSELECT \n    EXTRACT(YEAR FROM mois) AS annee,\n    SUM(nb_trains_circules - nb_trains_retard_arrivee) * 100.0 / SUM(nb_trains_circules) AS taux_ponctualite,\n    SUM(nb_trains_circules) AS total_circules\nFROM fct_regularite_ter_mois\nWHERE region ILIKE '%bretagne%'\n  AND EXTRACT(YEAR FROM mois) BETWEEN 2019 AND 2025\nGROUP BY annee\nORDER BY annee;\n",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4849,
+    "duree_s": 2.6
+  },
+  {
+    "id": "q15",
+    "categorie": "liaison",
+    "question": "Quelle était la ponctualité des TER en Occitanie en juillet 2025 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "85,6 %",
+        "ok": true
+      }
+    ],
+    "reponse": "En juillet 2025, la ponctualité des TER en Occitanie s'est établie à 85,6 %, pour un total de 13 942 trains ayant circulé au cours du mois.",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT taux_ponctualite, nb_trains_circules, nb_trains_retard_arrivee FROM fct_regularite_ter_mois WHERE region = 'Occitanie' AND mois = '2025-07-01'",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4328,
+    "duree_s": 22.3
+  },
+  {
+    "id": "q16",
+    "categorie": "causes",
+    "question": "De 2018 à avril 2026, quelle part des retards TGV de plus de 15 minutes est imputable à SNCF Réseau ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "42,8 %",
+        "ok": true
+      }
+    ],
+    "reponse": "Entre janvier 2018 et avril 2026, **42,8 %** des retards TGV de plus de 15 minutes sont imputables à SNCF Réseau. \n\nCette part représente la plus grande source d'imputation parmi les causes de retards enregistrées sur la période (infrastructure, gestion du trafic, etc.). À noter qu'une rupture de nomenclature est intervenue en mai 2026 dans la classification des causes.",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT \n    sum(c.nb_trains_retard_imputes) AS retard_reseau,\n    (SELECT sum(nb_trains_retard_imputes) FROM fct_causes_retard_mois WHERE mois >= '2018-01-01' AND mois <= '2026-04-01') AS total_retards,\n    round(100.0 * sum(c.nb_trains_retard_imputes) / (SELECT sum(nb_trains_retard_imputes) FROM fct_causes_retard_mois WHERE mois >= '2018-01-01' AND mois <= '2026-04-01'), 1) AS part_reseau\nFROM fct_causes_retard_mois c\nJOIN dim_cause d ON c.code_cause = d.code_cause\nWHERE c.mois >= '2018-01-01' AND c.mois <= '2026-04-01'\n  AND d.responsable = 'SNCF Réseau';",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4817,
+    "duree_s": 2.5
+  },
+  {
+    "id": "q17",
+    "categorie": "causes",
+    "question": "Quelle a été la première cause des retards TGV en 2024 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "Gestion du trafic",
+        "ok": true
+      },
+      {
+        "attendu": "22,9 %",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2024, la première cause des retards TGV a été la **gestion du trafic** (circulation et interactions entre réseaux), qui représente **22,9 %** des retards imputés. \n\nElle est suivie de très près par l'**infrastructure** (maintenance et travaux) avec **22,3 %**, puis par le **matériel roulant** (**18,1 %**) et les **causes externes** (météo, obstacles, mouvements sociaux...) avec **18,0 %**.",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "\nSELECT \n    c.libelle_cause,\n    SUM(f.nb_trains_retard_imputes) AS total_retard_impute,\n    ROUND(100.0 * SUM(f.nb_trains_retard_imputes) / SUM(SUM(f.nb_trains_retard_imputes)) OVER (), 1) AS part_pourcent\nFROM fct_causes_retard_mois f\nJOIN dim_cause c ON f.code_cause = c.code_cause\nJOIN dim_liaison l ON f.liaison_id = l.liaison_id\nWHERE l.activite = 'TGV'\n  AND EXTRACT(YEAR FROM f.mois) = 2024\nGROUP BY c.libelle_cause, c.ordre\nORDER BY total_retard_impute DESC\nLIMIT 5;\n",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4845,
+    "duree_s": 2.5
+  },
+  {
+    "id": "q18",
+    "categorie": "causes",
+    "question": "Quelle part des retards TGV était due au matériel roulant en 2023 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "20,3 %",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2023, la part des retards TGV imputée au matériel roulant s'est élevée à **20,3 %** de l'ensemble des retards enregistrés.",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT \n    SUM(CASE WHEN code_cause = 'materiel_roulant' THEN nb_trains_retard_imputes ELSE 0 END) * 100.0 / SUM(nb_trains_retard_imputes) AS part_materiel_roulant\nFROM fct_causes_retard_mois\nWHERE EXTRACT(YEAR FROM mois) = 2023;\n",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4331,
+    "duree_s": 2.5
+  },
+  {
+    "id": "q19",
+    "categorie": "classement",
+    "question": "Quel a été le mois le moins ponctuel pour les TGV en 2025 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "novembre",
+        "ok": true
+      },
+      {
+        "attendu": "81,2 %",
+        "ok": true
+      }
+    ],
+    "reponse": "En 2025, le mois le moins ponctuel pour les TGV a été novembre 2025, avec un taux de ponctualité de 81,1 %.",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT strftime(mois, '%Y-%m') AS mois_str, sum(nb_trains_retard_arrivee) / sum(nb_trains_circules) AS taux_retard, (1 - sum(nb_trains_retard_arrivee) / sum(nb_trains_circules))*100 AS taux_ponctualite FROM mart_ponctualite_nationale_mois WHERE activite = 'TGV' AND EXTRACT(YEAR FROM mois) = 2025 GROUP BY mois ORDER BY taux_ponctualite ASC LIMIT 1",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4454,
+    "duree_s": 2.0
+  },
+  {
+    "id": "q20",
+    "categorie": "piège",
+    "question": "Jusqu'à quel mois vont les données Intercités ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "mai 2026",
+        "ok": true
+      }
+    ],
+    "reponse": "Les données pour l'activité Intercités vont jusqu'en mai 2026 (inclus).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT max(mois) as dernier_mois FROM mart_ponctualite_nationale_mois WHERE activite = 'Intercités';",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4207,
+    "duree_s": 2.1
+  },
+  {
+    "id": "q21",
+    "categorie": "piège",
+    "question": "Quelle était la ponctualité des TGV le dernier mois disponible ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "septembre 2026",
+        "ok": true
+      },
+      {
+        "attendu": "83,2 %",
+        "ok": true
+      }
+    ],
+    "reponse": "Le dernier mois disponible pour les TGV est septembre 2026. \n\nSur cette période, le taux de ponctualité national des TGV s'est établi à **83,2 %** (sur un total de 35 520 trains ayant circulé).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT max(mois) AS dernier_mois FROM mart_ponctualite_nationale_mois WHERE activite = 'TGV';",
+        "erreur": null
+      },
+      {
+        "sql": "SELECT taux_ponctualite, nb_trains_circules, nb_trains_retard_arrivee FROM mart_ponctualite_nationale_mois WHERE activite = 'TGV' AND mois = '2026-09-01';",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 2,
+    "nb_erreurs_sql": 0,
+    "tokens": 6647,
+    "duree_s": 2.8
+  },
+  {
+    "id": "q22",
+    "categorie": "météo",
+    "question": "Quelle région a compté le plus de jours de gel en janvier 2024 ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "Bourgogne-Franche-Comté",
+        "ok": true
+      }
+    ],
+    "reponse": "En janvier 2024, la région ayant compté le plus de jours de gel est la **Bourgogne-Franche-Comté**, avec une moyenne de **16,6 jours de gel** (et une température minimale moyenne de -0,1 °C).",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT region, nb_jours_gel, temperature_min_c FROM fct_meteo_region_mois WHERE mois = '2024-01-01' ORDER BY nb_jours_gel DESC LIMIT 1;",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4295,
+    "duree_s": 2.5
+  },
+  {
+    "id": "q23",
+    "categorie": "prévision",
+    "question": "Pour le mois prochain, quelle liaison a le plus fort taux de retard prévu par le modèle ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "Paris Est → Stuttgart",
+        "ok": true
+      },
+      {
+        "attendu": "56,7 %",
+        "ok": true
+      }
+    ],
+    "reponse": "Pour le mois de prévision d'octobre 2026, la liaison qui présente le plus fort taux de retard prévu par le modèle est **Paris Est → Stuttgart** avec un taux de retard estimé à **56,7 %**.",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [
+      {
+        "sql": "SELECT l.libelle_liaison, p.taux_retard_prevu, p.mois FROM ml_prevision_mois_suivant p JOIN dim_liaison l ON p.liaison_id = l.liaison_id ORDER BY p.taux_retard_prevu DESC LIMIT 1",
+        "erreur": null
+      }
+    ],
+    "nb_requetes": 1,
+    "nb_erreurs_sql": 0,
+    "tokens": 4362,
+    "duree_s": 2.8
+  },
+  {
+    "id": "q24",
+    "categorie": "hors périmètre",
+    "question": "À quelle heure part le prochain TGV de Paris à Lyon demain matin ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "refus (hors périmètre)",
+        "ok": true
+      }
+    ],
+    "reponse": "Cette question sort du périmètre de l'Observatoire de la ponctualité ferroviaire, qui analyse les statistiques mensuelles de régularité et d'annulation des trains (TGV, Intercités et TER) ainsi que leurs causes, et non les horaires en temps réel ou la réservation de billets.\n\nSouhaitez-vous plutôt connaître la ponctualité moyenne des TGV sur la liaison entre Paris et Lyon sur la dernière période disponible ?",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [],
+    "nb_requetes": 0,
+    "nb_erreurs_sql": 0,
+    "tokens": 2081,
+    "duree_s": 1.1
+  },
+  {
+    "id": "q25",
+    "categorie": "hors périmètre",
+    "question": "Combien coûte un billet de TGV Paris – Marseille ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "refus (hors périmètre)",
+        "ok": true
+      }
+    ],
+    "reponse": "La question du prix des billets de TGV sort du périmètre de l'Observatoire de la ponctualité ferroviaire, qui se consacre exclusivement à la régularité, aux annulations et aux causes de retard des trains ainsi qu'aux conditions météorologiques. \n\nJe peux en revanche vous renseigner sur la régularité de la liaison TGV Paris – Marseille. Souhaitez-vous connaître son taux de ponctualité sur la dernière période disponible ?",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [],
+    "nb_requetes": 0,
+    "nb_erreurs_sql": 0,
+    "tokens": 2083,
+    "duree_s": 1.5
+  },
+  {
+    "id": "q26",
+    "categorie": "hors périmètre",
+    "question": "Quelle est la ponctualité des vols Air France au départ de Paris ?",
+    "statut": "réussi",
+    "verifications": [
+      {
+        "attendu": "refus (hors périmètre)",
+        "ok": true
+      }
+    ],
+    "reponse": "Cette question sort du périmètre de l'Observatoire de la ponctualité ferroviaire, qui se consacre exclusivement aux trains SNCF (TGV, TER et Intercités) et non aux compagnies aériennes. \n\nSouhaitez-vous plutôt connaître la ponctualité des TGV au départ de Paris ?",
+    "modele": "gemini-3.5-flash-lite",
+    "requetes": [],
+    "nb_requetes": 0,
+    "nb_erreurs_sql": 0,
+    "tokens": 2056,
+    "duree_s": 1.1
+  }
+]

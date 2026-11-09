@@ -46,6 +46,27 @@ sur les données exactes est vérifiable, là où un RAG paraphraserait des extr
 Garde-fous : base en mémoire verrouillée (aucun accès disque ni réseau), une seule instruction `SELECT` par appel,
 délai max de 10 s, 6 étapes max par question ; quotas par visite et par jour pour rester dans les limites gratuites du fournisseur, et relais automatique vers un autre modèle, puis vers un second fournisseur gratuit (ex. Groq), quand le quota d'un modèle est épuisé ou le service indisponible.
 
+### Évaluation : 26 / 26 réponses justes
+
+L'assistant est mesuré sur un jeu de **26 questions de référence** ([`evaluation/`](evaluation/)) : valeurs
+nationales, classements, comparaisons, causes, météo, prévision, pièges connus (moyenne de taux au lieu d'un recalcul
+à partir des sommes, dernier mois différent selon l'activité) et questions hors périmètre (horaires, prix, avion).
+
+- Chaque question a une **requête SQL de référence** exécutée sur les données du jour : les réponses attendues suivent les mises à jour du pipeline.
+- La **notation est déterministe**, sans LLM juge : la réponse doit contenir chaque valeur attendue (taux à 0,15 point près, libellés, volumes à 0,5 % près), et **un chiffre avancé sans requête réussie compte comme inventé**.
+- Résultat actuel avec `gemini-3.5-flash-lite` : **26 / 26**, une requête SQL par question en moyenne, environ 2 s par réponse ([détail](evaluation/RESULTATS.md)).
+
+L'évaluation a servi à corriger l'agent. Au premier passage, elle a révélé deux défauts :
+- sur une question de prix hors périmètre, l'assistant refusait bien mais citait ensuite une ponctualité Paris–Marseille **sans l'avoir calculée** ;
+- pour la part du matériel roulant, il filtrait les causes sur `libelle_cause ILIKE '%matériel%'` et comptait donc aussi « réutilisation de matériel » (29,8 % au lieu de 20,3 %).
+
+Deux règles ajoutées aux consignes ont corrigé ces défauts, vérifiés ensuite par plusieurs relances.
+
+```bash
+python -m evaluation.lancer              # ~3 min avec les clés gratuites de .streamlit/secrets.toml
+python -m evaluation.lancer --ids q08 q11
+```
+
 ## Architecture
 
 ```mermaid
@@ -115,10 +136,12 @@ Les tests dbt ont fait remonter des anomalies réelles dans les sources :
 Deux niveaux de contrôle, lancés automatiquement par GitHub Actions :
 
 - **Données** : 60 tests dbt (unicité, relations, valeurs plausibles, causes qui somment à 100 %) à chaque exécution du pipeline.
-- **Code** : 52 tests `pytest` ([`tests/`](tests/)) à chaque push, sans réseau ni clé d'API :
+- **Code** : 102 tests `pytest` ([`tests/`](tests/)) à chaque push, sans réseau ni clé d'API :
   - *assistant IA* : seules les requêtes `SELECT` passent (écriture, `ATTACH`, `COPY`, `SET`… refusés), aucun accès disque même via `read_parquet`, délai max, troncature ; boucle de l'agent avec un faux modèle (correction après erreur SQL, limite d'étapes, relais vers le modèle suivant quand le quota est épuisé) ;
   - *temps réel* : lecture d'extraits SIRI Lite (retard au terminus, seuil de 5 min aux bornes, suppressions totales ou partielles, perturbations en cours, texte nettoyé du HTML) ;
   - *prévision* : **aucune fuite d'information du futur** — modifier un mois et les suivants ne change aucune variable de ce mois.
+
+  - *évaluation* : notation (nombres à la française, libellés, refus) et validité des 23 requêtes de référence.
 
   Les tests ont été validés par mutation : en réintroduisant volontairement une fuite, en rouvrant l'accès disque ou en décalant le seuil de retard, au moins un test échoue.
 

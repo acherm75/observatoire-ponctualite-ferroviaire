@@ -1,0 +1,95 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "par_responsable",
+  "position": {
+    "x": 852,
+    "y": 84,
+    "z": 3000,
+    "width": 412,
+    "height": 360,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "clusteredBarChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_cause"
+                    }
+                  },
+                  "Property": "responsable"
+                }
+              },
+              "queryRef": "dim_cause.responsable",
+              "nativeQueryRef": "responsable"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_causes_retard_mois"
+                    }
+                  },
+                  "Property": "Part de la cause"
+                }
+              },
+              "queryRef": "fct_causes_retard_mois.Part de la cause",
+              "nativeQueryRef": "Part de la cause"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fct_causes_retard_mois"
+                  }
+                },
+                "Property": "Part de la cause"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Part des retards par responsable (année choisie)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

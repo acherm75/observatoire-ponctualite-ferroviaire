@@ -1,0 +1,48 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "note_controle",
+  "position": {
+    "x": 16,
+    "y": 520,
+    "z": 8000,
+    "width": 1248,
+    "height": 120,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Si une carte diffère de la valeur attendue, le modèle ou une mesure DAX est faux : ne pas publier le rapport.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#5B6B7B"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Les valeurs attendues sont recalculées à chaque génération du projet (python -m powerbi.generer_pbip).",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#5B6B7B"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

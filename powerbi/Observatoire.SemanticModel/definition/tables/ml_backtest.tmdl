@@ -1,0 +1,45 @@
+table ml_backtest
+
+	measure 'Taux de retard réel (moyenne des liaisons)' = AVERAGE ( ml_backtest[taux_retard] )
+		formatString: 0.0 %
+		displayFolder: Prévision
+
+	measure 'Taux de retard prévu (moyenne des liaisons)' = AVERAGE ( ml_backtest[taux_retard_prevu] )
+		formatString: 0.0 %
+		displayFolder: Prévision
+
+	/// Erreur moyenne de la prévision à M+1 sur la période de test, en points.
+	measure 'Erreur absolue moyenne' = AVERAGEX ( ml_backtest, ABS ( ml_backtest[taux_retard] - ml_backtest[taux_retard_prevu] ) ) * 100
+		formatString: 0.00 "pts"
+		displayFolder: Prévision
+
+	column liaison_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: liaison_id
+
+	column mois
+		dataType: dateTime
+		formatString: mmm yyyy
+		summarizeBy: none
+		sourceColumn: mois
+
+	column taux_retard
+		dataType: double
+		summarizeBy: none
+		sourceColumn: taux_retard
+
+	column taux_retard_prevu
+		dataType: double
+		summarizeBy: none
+		sourceColumn: taux_retard_prevu
+
+	partition ml_backtest = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document ( Binary.Buffer ( Web.Contents ( UrlDonnees, [ RelativePath = "ml_backtest.parquet" ] ) ) )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

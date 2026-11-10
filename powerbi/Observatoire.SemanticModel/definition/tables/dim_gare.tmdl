@@ -1,0 +1,46 @@
+table dim_gare
+
+	column gare_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: gare_id
+
+	column nom_gare
+		dataType: string
+		summarizeBy: none
+		sourceColumn: nom_gare
+
+	column code_departement
+		dataType: string
+		summarizeBy: none
+		sourceColumn: code_departement
+
+	column region
+		dataType: string
+		summarizeBy: none
+		sourceColumn: region
+
+	column pays
+		dataType: string
+		summarizeBy: none
+		sourceColumn: pays
+
+	column est_etranger
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: est_etranger
+
+	column nb_voyageurs_2024
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: nb_voyageurs_2024
+
+	partition dim_gare = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document ( Binary.Buffer ( Web.Contents ( UrlDonnees, [ RelativePath = "dim_gare.parquet" ] ) ) )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

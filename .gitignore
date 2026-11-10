@@ -14,3 +14,5 @@ logs/
 .streamlit/secrets.toml
 etat_temps_reel/
 data/temps_reel/trains_*.parquet
+powerbi/**/.pbi/localSettings.json
+powerbi/**/.pbi/cache.abf

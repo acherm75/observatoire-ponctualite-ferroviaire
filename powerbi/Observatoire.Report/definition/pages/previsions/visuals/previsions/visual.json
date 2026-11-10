@@ -1,0 +1,123 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "previsions",
+  "position": {
+    "x": 16,
+    "y": 84,
+    "z": 1000,
+    "width": 780,
+    "height": 620,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_liaison"
+                    }
+                  },
+                  "Property": "libelle_liaison"
+                }
+              },
+              "queryRef": "dim_liaison.libelle_liaison",
+              "nativeQueryRef": "libelle_liaison",
+              "displayName": "Liaison"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ml_prevision_mois_suivant"
+                    }
+                  },
+                  "Property": "taux_retard_prevu"
+                }
+              },
+              "queryRef": "ml_prevision_mois_suivant.taux_retard_prevu",
+              "nativeQueryRef": "taux_retard_prevu",
+              "displayName": "Retard prévu"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ml_prevision_mois_suivant"
+                    }
+                  },
+                  "Property": "taux_retard_mois_precedent"
+                }
+              },
+              "queryRef": "ml_prevision_mois_suivant.taux_retard_mois_precedent",
+              "nativeQueryRef": "taux_retard_mois_precedent",
+              "displayName": "Retard le mois précédent"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ml_prevision_mois_suivant"
+                    }
+                  },
+                  "Property": "taux_retard_moyen_12_mois"
+                }
+              },
+              "queryRef": "ml_prevision_mois_suivant.taux_retard_moyen_12_mois",
+              "nativeQueryRef": "taux_retard_moyen_12_mois",
+              "displayName": "Retard moyen sur 12 mois"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "ml_prevision_mois_suivant"
+                  }
+                },
+                "Property": "taux_retard_prevu"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Liaisons au plus fort taux de retard prévu'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

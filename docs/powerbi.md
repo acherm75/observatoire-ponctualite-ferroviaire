@@ -1,73 +1,75 @@
 # Rapport Power BI
 
-Le rapport s'appuie directement sur les fichiers Parquet de `data/marts/`, c'est-à-dire le même modèle
-en étoile que l'app Streamlit.
+Le rapport est versionné au **format projet Power BI (PBIP)** dans [`powerbi/`](../powerbi/) : le modèle en
+TMDL et les pages en JSON (PBIR), lisibles et comparables dans Git comme du code. Il est entièrement produit
+par un script, [`powerbi/generer_pbip.py`](../powerbi/generer_pbip.py), à partir du schéma réel des Parquet
+de `data/marts/`.
 
-> Power BI Desktop ne fonctionne que sous Windows. Sur Mac : machine virtuelle (Parallels, UTM), PC de
-> l'école ou Windows 365. Le fichier `.pbix` final se publie ensuite sur Power BI Service, et une capture
-> d'écran ou un PDF peut aller dans `docs/`.
+## Contenu
 
-## 1. Import
+**Modèle** (même modèle en étoile que l'app Streamlit) : 12 tables chargées directement depuis les Parquet
+publiés chaque jour sur GitHub (paramètre `UrlDonnees`), 14 relations (dont la gare d'arrivée en relation
+inactive, utilisée via `USERELATIONSHIP`) et 42 mesures DAX rangées par dossier :
 
-*Obtenir les données → Parquet* pour chaque fichier (ou *Dossier* sur `data/marts`, puis filtrer) :
-
-`dim_date`, `dim_liaison`, `dim_gare`, `dim_region`, `dim_cause`,
-`fct_regularite_liaison_mois`, `fct_causes_retard_mois`, `fct_regularite_ter_mois`, `fct_meteo_region_mois`,
-`ml_prevision_mois_suivant`.
-
-Astuce : pour pointer vers le dépôt GitHub (données mises à jour chaque jour par la CI), utiliser la source
-*Web* avec l'URL brute `https://raw.githubusercontent.com/<compte>/<repo>/main/data/marts/<table>.parquet`.
-
-## 2. Relations (vue Modèle)
-
-| De (plusieurs) | Vers (un) | Clé |
+| Dossier | Exemples | Règle métier appliquée |
 |---|---|---|
-| fct_regularite_liaison_mois | dim_date | mois |
-| fct_regularite_liaison_mois | dim_liaison | liaison_id |
-| fct_causes_retard_mois | dim_date | mois |
-| fct_causes_retard_mois | dim_liaison | liaison_id |
-| fct_causes_retard_mois | dim_cause | code_cause |
-| fct_regularite_ter_mois | dim_date | mois |
-| fct_regularite_ter_mois | dim_region | region |
-| fct_meteo_region_mois | dim_date | mois |
-| fct_meteo_region_mois | dim_region | region |
-| dim_liaison | dim_gare | gare_depart_id → gare_id (relation active) |
-| ml_prevision_mois_suivant | dim_liaison | liaison_id |
+| Liaisons | `Ponctualité`, `Écart vs N-1`, `Retard moyen des trains en retard (min)` | Lignes incohérentes de la source exclues ; taux recalculé à partir des sommes ; retard moyen pondéré |
+| National | `Ponctualité TGV / TER / Intercités`, `Ponctualité nationale 12 mois glissants` | N-1 par décalage de 12 mois (`TREATAS`), sans table de dates journalière |
+| TER, Météo | `Ponctualité TER (régions)`, `Jours de chaleur (moyenne)` | |
+| Causes | `Part de la cause` | Part calculée sur les 6 causes (`REMOVEFILTERS ( dim_cause )`) |
+| Prévision | `Erreur absolue moyenne` | Backtest XGBoost |
+| Contrôle | `Contrôle · TGV 2025`… | Voir ci-dessous |
 
-Marquer `dim_date` comme table de dates (colonne `mois`).
+**7 pages** : Synthèse (cartes par activité, écart N-1, tendance sur 12 mois glissants), Liaisons (classement,
+évolution mensuelle au clic, ponctualité par gare), Causes des retards, Régions TER (matrice région × année),
+Effet météo, Prévisions, et **Contrôle**.
 
-## 3. Mesures DAX
+**Page Contrôle** : 7 cartes recalculent dans Power BI des chiffres déjà connus (TGV 2025, Mâcon Loché → Paris,
+retard moyen pondéré, part de SNCF Réseau…). La valeur attendue, calculée avec DuckDB au moment de la génération,
+est écrite dans le titre de chaque carte : si une carte diffère de son titre, une mesure est fausse.
 
-```dax
-Trains circulés = SUM ( fct_regularite_liaison_mois[nb_trains_circules] )
-Trains en retard = SUM ( fct_regularite_liaison_mois[nb_trains_retard_arrivee] )
-Ponctualité =
-    DIVIDE ( [Trains circulés] - [Trains en retard], [Trains circulés] )
-Taux d'annulation =
-    DIVIDE ( SUM ( fct_regularite_liaison_mois[nb_trains_annules] ),
-             SUM ( fct_regularite_liaison_mois[nb_trains_prevus] ) )
-Ponctualité N-1 =
-    CALCULATE ( [Ponctualité], SAMEPERIODLASTYEAR ( dim_date[mois] ) )
-Écart vs N-1 (pts) = ( [Ponctualité] - [Ponctualité N-1] ) * 100
-Ponctualité 12 mois glissants =
-    CALCULATE ( [Ponctualité],
-        DATESINPERIOD ( dim_date[mois], MAX ( dim_date[mois] ), -12, MONTH ) )
+## Ouvrir le rapport (Windows)
 
-Ponctualité TER =
-    DIVIDE (
-        SUM ( fct_regularite_ter_mois[nb_trains_circules] ) - SUM ( fct_regularite_ter_mois[nb_trains_retard_arrivee] ),
-        SUM ( fct_regularite_ter_mois[nb_trains_circules] ) )
+Power BI Desktop ne fonctionne que sous Windows (sur Mac : Parallels ou UTM avec Windows 11, ou un PC de l'école).
 
-Retards imputés = SUM ( fct_causes_retard_mois[nb_trains_retard_imputes] )
-Part de la cause =
-    DIVIDE ( [Retards imputés], CALCULATE ( [Retards imputés], ALL ( dim_cause ) ) )
+1. Installer **Power BI Desktop** (gratuit, Microsoft Store).
+2. Copier le dossier `powerbi/` du dépôt (ou cloner le dépôt) puis ouvrir **`powerbi/Observatoire.pbip`**.
+   Si Desktop signale un format non pris en charge : *Fichier → Options → Fonctionnalités en préversion*, cocher
+   « Power BI Project (.pbip) », « Store semantic model using TMDL format » et « Store reports using enhanced
+   metadata format (PBIR) », puis redémarrer.
+3. **Actualiser** (ruban Accueil). À la première actualisation, Power BI demande comment se connecter à
+   `raw.githubusercontent.com` : choisir **Anonyme**, puis niveau de confidentialité **Public**.
+4. Aller sur la page **Contrôle** et vérifier que chaque carte affiche la valeur de son titre.
+5. Retoucher la mise en page si besoin, puis :
+   - *Fichier → Enregistrer sous* → `.pbix` pour un fichier unique à partager ;
+   - *Fichier → Exporter → PDF* et quelques captures pour `docs/` et le README ;
+   - *Publier* vers Power BI Service si tu as un compte professionnel ou école.
+
+Données hors ligne : remplacer la valeur du paramètre `UrlDonnees` (*Transformer les données → Gérer les
+paramètres*) par un dossier local, par exemple `C:\observatoire\data\marts\` (les requêtes utilisent alors
+`File.Contents` : remplacer `Web.Contents ( UrlDonnees, [ RelativePath = "x.parquet" ] )` par
+`File.Contents ( UrlDonnees & "x.parquet" )`).
+
+## Régénérer le projet
+
+```bash
+python -m powerbi.generer_pbip
 ```
 
-## 4. Pages proposées
+Le script réécrit `powerbi/Observatoire.SemanticModel` et `powerbi/Observatoire.Report` : les modifications
+faites à la main dans Power BI Desktop sur ces dossiers sont alors perdues. Soit on modifie le script (source de
+vérité), soit on arrête de régénérer une fois le rapport retouché dans Desktop.
 
-1. **Synthèse** : cartes (ponctualité TGV / TER / Intercités, écart N-1), courbe 12 mois glissants, segment activité / année.
-2. **Liaisons** : tableau classé par ponctualité avec mise en forme conditionnelle, filtre « trains circulés > 500 », info-bulle avec la courbe mensuelle de la liaison.
-3. **Causes** : histogramme empilé 100 % par année (`dim_cause[libelle_cause]`), regroupement par `responsable`, note sur la rupture de mai 2026.
-4. **Régions TER** : matrice région × année avec échelle de couleurs, carte (Azure Maps ou carte remplie) sur `dim_region`.
-5. **Météo** : nuage de points `fct_regularite_ter_mois` (ponctualité vs jours de chaleur), segment saison.
-6. **Prévisions** : tableau de `ml_prevision_mois_suivant` avec le taux prévu comparé à la moyenne sur 12 mois.
+## Vérifications automatiques
+
+Sans Power BI Desktop, on vérifie tout ce qui peut l'être :
+
+- **Schémas Microsoft** : les 58 fichiers JSON du rapport sont valides au regard des schémas officiels
+  ([microsoft/json-schemas](https://github.com/microsoft/json-schemas/tree/main/fabric/item/report)) ;
+- **Cohérence** ([`tests/test_powerbi.py`](../tests/test_powerbi.py)) : chaque champ cité par un visuel et
+  chaque référence DAX existe dans le modèle, les colonnes correspondent exactement aux Parquet, les relations
+  reposent sur des clés uniques ;
+- **Chiffres** : la page Contrôle, à vérifier à l'ouverture.
+
+Ce qui ne peut être vérifié qu'en ouvrant le rapport : l'exécution des mesures DAX par le moteur et le rendu
+des visuels (tailles, couleurs, lisibilité).

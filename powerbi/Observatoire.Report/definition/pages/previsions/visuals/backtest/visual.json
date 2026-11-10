@@ -1,0 +1,94 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "backtest",
+  "position": {
+    "x": 812,
+    "y": 84,
+    "z": 2000,
+    "width": 452,
+    "height": 420,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ml_backtest"
+                    }
+                  },
+                  "Property": "mois"
+                }
+              },
+              "queryRef": "ml_backtest.mois",
+              "nativeQueryRef": "mois"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ml_backtest"
+                    }
+                  },
+                  "Property": "Taux de retard réel (moyenne des liaisons)"
+                }
+              },
+              "queryRef": "ml_backtest.Taux de retard réel (moyenne des liaisons)",
+              "nativeQueryRef": "Taux de retard réel (moyenne des liaisons)",
+              "displayName": "Réel"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "ml_backtest"
+                    }
+                  },
+                  "Property": "Taux de retard prévu (moyenne des liaisons)"
+                }
+              },
+              "queryRef": "ml_backtest.Taux de retard prévu (moyenne des liaisons)",
+              "nativeQueryRef": "Taux de retard prévu (moyenne des liaisons)",
+              "displayName": "Prévu"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Test sur des mois jamais vus à l''entraînement : réel et prévu'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

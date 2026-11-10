@@ -1,0 +1,189 @@
+table fct_regularite_liaison_mois
+
+	measure 'Trains prévus' = CALCULATE ( SUM ( fct_regularite_liaison_mois[nb_trains_prevus] ), fct_regularite_liaison_mois[est_incoherent] = FALSE () )
+		formatString: #,0
+		displayFolder: Liaisons
+
+	measure 'Trains annulés' = CALCULATE ( SUM ( fct_regularite_liaison_mois[nb_trains_annules] ), fct_regularite_liaison_mois[est_incoherent] = FALSE () )
+		formatString: #,0
+		displayFolder: Liaisons
+
+	/// Trains ayant circulé, hors lignes incohérentes de la source (avril-juin 2020).
+	measure 'Trains circulés' = CALCULATE ( SUM ( fct_regularite_liaison_mois[nb_trains_circules] ), fct_regularite_liaison_mois[est_incoherent] = FALSE () )
+		formatString: #,0
+		displayFolder: Liaisons
+
+	measure 'Trains en retard' = CALCULATE ( SUM ( fct_regularite_liaison_mois[nb_trains_retard_arrivee] ), fct_regularite_liaison_mois[est_incoherent] = FALSE () )
+		formatString: #,0
+		displayFolder: Liaisons
+
+	/// Recalculée à partir des sommes : jamais de moyenne de taux.
+	measure 'Ponctualité' = DIVIDE ( [Trains circulés] - [Trains en retard], [Trains circulés] )
+		formatString: 0.0 %
+		displayFolder: Liaisons
+
+	measure 'Taux d''annulation' = DIVIDE ( [Trains annulés], [Trains prévus] )
+		formatString: 0.0 %
+		displayFolder: Liaisons
+
+	/// Moyenne pondérée par le nombre de trains en retard de chaque liaison et de chaque mois.
+	measure 'Retard moyen des trains en retard (min)' =
+			VAR lignes = FILTER ( fct_regularite_liaison_mois, NOT fct_regularite_liaison_mois[est_incoherent] && NOT ISBLANK ( fct_regularite_liaison_mois[retard_moyen_trains_retard_min] ) )
+			RETURN DIVIDE (
+			    SUMX ( lignes, fct_regularite_liaison_mois[retard_moyen_trains_retard_min] * fct_regularite_liaison_mois[nb_trains_retard_arrivee] ),
+			    SUMX ( lignes, fct_regularite_liaison_mois[nb_trains_retard_arrivee] ) )
+		formatString: 0.0
+		displayFolder: Liaisons
+
+	measure 'Part des trains à plus de 60 min de retard' = DIVIDE ( CALCULATE ( SUM ( fct_regularite_liaison_mois[nb_trains_retard_sup_60] ), fct_regularite_liaison_mois[est_incoherent] = FALSE () ), [Trains circulés] )
+		formatString: 0.0 %
+		displayFolder: Liaisons
+
+	measure 'Ponctualité N-1' =
+			VAR moisN1 = SELECTCOLUMNS ( VALUES ( dim_date[mois] ), "mois", EDATE ( dim_date[mois], -12 ) )
+			RETURN CALCULATE ( [Ponctualité], REMOVEFILTERS ( dim_date ), TREATAS ( moisN1, dim_date[mois] ) )
+		formatString: 0.0 %
+		displayFolder: Liaisons
+
+	/// En points de pourcentage.
+	measure 'Écart vs N-1' =
+			VAR n = [Ponctualité]
+			VAR n1 = [Ponctualité N-1]
+			RETURN IF ( NOT ISBLANK ( n ) && NOT ISBLANK ( n1 ), ( n - n1 ) * 100 )
+		formatString: +0.0 "pts";-0.0 "pts";0.0 "pts"
+		displayFolder: Liaisons
+
+	/// À utiliser avec dim_gare pour analyser les liaisons par gare d'arrivée.
+	measure 'Ponctualité (gare d''arrivée)' = CALCULATE ( [Ponctualité], USERELATIONSHIP ( dim_liaison[gare_arrivee_id], dim_gare[gare_id] ) )
+		formatString: 0.0 %
+		displayFolder: Liaisons
+
+	column liaison_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: liaison_id
+
+	column mois
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		summarizeBy: none
+		sourceColumn: mois
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column activite
+		dataType: string
+		summarizeBy: none
+		sourceColumn: activite
+
+	column gare_depart_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: gare_depart_id
+
+	column gare_arrivee_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: gare_arrivee_id
+
+	column nb_trains_prevus
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_prevus
+
+	column nb_trains_annules
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_annules
+
+	column nb_trains_circules
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_circules
+
+	column nb_trains_retard_arrivee
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_retard_arrivee
+
+	column nb_trains_retard_sup_15
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: nb_trains_retard_sup_15
+
+	column nb_trains_retard_sup_30
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: nb_trains_retard_sup_30
+
+	column nb_trains_retard_sup_60
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: nb_trains_retard_sup_60
+
+	column retard_moyen_trains_retard_min
+		dataType: double
+		summarizeBy: none
+		sourceColumn: retard_moyen_trains_retard_min
+
+	column retard_moyen_tous_trains_min
+		dataType: double
+		summarizeBy: none
+		sourceColumn: retard_moyen_tous_trains_min
+
+	column taux_ponctualite
+		dataType: double
+		formatString: 0.0 %
+		summarizeBy: none
+		sourceColumn: taux_ponctualite
+
+	column taux_annulation
+		dataType: double
+		formatString: 0.0 %
+		summarizeBy: none
+		sourceColumn: taux_annulation
+
+	column est_incoherent
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: est_incoherent
+
+	column meteo_precipitations_mm
+		dataType: double
+		summarizeBy: none
+		sourceColumn: meteo_precipitations_mm
+
+	column meteo_jours_pluie_forte
+		dataType: double
+		summarizeBy: none
+		sourceColumn: meteo_jours_pluie_forte
+
+	column meteo_temperature_moy_c
+		dataType: double
+		summarizeBy: none
+		sourceColumn: meteo_temperature_moy_c
+
+	column meteo_jours_gel
+		dataType: double
+		summarizeBy: none
+		sourceColumn: meteo_jours_gel
+
+	column meteo_jours_chaleur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: meteo_jours_chaleur
+
+	column meteo_jours_vent_fort
+		dataType: double
+		summarizeBy: none
+		sourceColumn: meteo_jours_vent_fort
+
+	partition fct_regularite_liaison_mois = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document ( Binary.Buffer ( Web.Contents ( UrlDonnees, [ RelativePath = "fct_regularite_liaison_mois.parquet" ] ) ) )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

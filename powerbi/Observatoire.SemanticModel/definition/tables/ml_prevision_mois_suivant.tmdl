@@ -1,0 +1,40 @@
+table ml_prevision_mois_suivant
+
+	column liaison_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: liaison_id
+
+	column mois
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		summarizeBy: none
+		sourceColumn: mois
+
+	column taux_retard_prevu
+		dataType: double
+		formatString: 0.0 %
+		summarizeBy: none
+		sourceColumn: taux_retard_prevu
+
+	column taux_retard_mois_precedent
+		dataType: double
+		formatString: 0.0 %
+		summarizeBy: none
+		sourceColumn: taux_retard_mois_precedent
+
+	column taux_retard_moyen_12_mois
+		dataType: double
+		formatString: 0.0 %
+		summarizeBy: none
+		sourceColumn: taux_retard_moyen_12_mois
+
+	partition ml_prevision_mois_suivant = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document ( Binary.Buffer ( Web.Contents ( UrlDonnees, [ RelativePath = "ml_prevision_mois_suivant.parquet" ] ) ) )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

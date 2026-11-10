@@ -1,0 +1,61 @@
+table dim_date
+
+	column mois
+		dataType: dateTime
+		formatString: mmm yyyy
+		summarizeBy: none
+		sourceColumn: mois
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column annee
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: annee
+
+	column num_mois
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: num_mois
+
+	column annee_mois
+		dataType: string
+		summarizeBy: none
+		sourceColumn: annee_mois
+
+	column trimestre
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: trimestre
+
+	column nom_mois
+		dataType: string
+		summarizeBy: none
+		sourceColumn: nom_mois
+		sortByColumn: num_mois
+
+	column saison
+		dataType: string
+		summarizeBy: none
+		sourceColumn: saison
+
+	column est_vacances_ete
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: est_vacances_ete
+
+	column est_periode_covid
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: est_periode_covid
+
+	partition dim_date = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document ( Binary.Buffer ( Web.Contents ( UrlDonnees, [ RelativePath = "dim_date.parquet" ] ) ) )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

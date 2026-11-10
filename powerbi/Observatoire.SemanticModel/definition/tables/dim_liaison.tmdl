@@ -1,0 +1,62 @@
+table dim_liaison
+
+	column liaison_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: liaison_id
+
+	column activite
+		dataType: string
+		summarizeBy: none
+		sourceColumn: activite
+
+	column type_service
+		dataType: string
+		summarizeBy: none
+		sourceColumn: type_service
+
+	column gare_depart_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: gare_depart_id
+
+	column gare_arrivee_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: gare_arrivee_id
+
+	column libelle_liaison
+		dataType: string
+		summarizeBy: none
+		sourceColumn: libelle_liaison
+
+	column duree_moyenne_min
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: duree_moyenne_min
+
+	column premier_mois
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		summarizeBy: none
+		sourceColumn: premier_mois
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column dernier_mois
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		summarizeBy: none
+		sourceColumn: dernier_mois
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	partition dim_liaison = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document ( Binary.Buffer ( Web.Contents ( UrlDonnees, [ RelativePath = "dim_liaison.parquet" ] ) ) )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

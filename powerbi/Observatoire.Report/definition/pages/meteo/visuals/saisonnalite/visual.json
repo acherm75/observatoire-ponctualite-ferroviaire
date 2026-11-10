@@ -1,0 +1,111 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "saisonnalite",
+  "position": {
+    "x": 652,
+    "y": 84,
+    "z": 2000,
+    "width": 612,
+    "height": 300,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_date"
+                    }
+                  },
+                  "Property": "nom_mois"
+                }
+              },
+              "queryRef": "dim_date.nom_mois",
+              "nativeQueryRef": "nom_mois"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_regularite_ter_mois"
+                    }
+                  },
+                  "Property": "Ponctualité TER (régions)"
+                }
+              },
+              "queryRef": "fct_regularite_ter_mois.Ponctualité TER (régions)",
+              "nativeQueryRef": "Ponctualité TER (régions)",
+              "displayName": "TER"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_regularite_liaison_mois"
+                    }
+                  },
+                  "Property": "Ponctualité"
+                }
+              },
+              "queryRef": "fct_regularite_liaison_mois.Ponctualité",
+              "nativeQueryRef": "Ponctualité",
+              "displayName": "TGV et Intercités"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "dim_date"
+                  }
+                },
+                "Property": "nom_mois"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Saisonnalité : ponctualité moyenne par mois de l''année'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

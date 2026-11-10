@@ -1,0 +1,173 @@
+table mart_ponctualite_nationale_mois
+
+	measure 'Trains circulés (national)' = SUM ( mart_ponctualite_nationale_mois[nb_trains_circules] )
+		formatString: #,0
+		displayFolder: National
+
+	measure 'Ponctualité nationale' = DIVIDE ( SUM ( mart_ponctualite_nationale_mois[nb_trains_circules] ) - SUM ( mart_ponctualite_nationale_mois[nb_trains_retard_arrivee] ), SUM ( mart_ponctualite_nationale_mois[nb_trains_circules] ) )
+		formatString: 0.0 %
+		displayFolder: National
+
+	measure 'Taux d''annulation national' = DIVIDE ( SUM ( mart_ponctualite_nationale_mois[nb_trains_annules] ), SUM ( mart_ponctualite_nationale_mois[nb_trains_prevus] ) )
+		formatString: 0.0 %
+		displayFolder: National
+
+	measure 'Ponctualité TGV' = CALCULATE ( [Ponctualité nationale], mart_ponctualite_nationale_mois[activite] = "TGV" )
+		formatString: 0.0 %
+		displayFolder: National
+
+	measure 'Ponctualité TER' = CALCULATE ( [Ponctualité nationale], mart_ponctualite_nationale_mois[activite] = "TER" )
+		formatString: 0.0 %
+		displayFolder: National
+
+	measure 'Ponctualité Intercités' = CALCULATE ( [Ponctualité nationale], mart_ponctualite_nationale_mois[activite] = "Intercités" )
+		formatString: 0.0 %
+		displayFolder: National
+
+	measure 'Ponctualité nationale N-1' =
+			VAR moisN1 = SELECTCOLUMNS ( VALUES ( dim_date[mois] ), "mois", EDATE ( dim_date[mois], -12 ) )
+			RETURN CALCULATE ( [Ponctualité nationale], REMOVEFILTERS ( dim_date ), TREATAS ( moisN1, dim_date[mois] ) )
+		formatString: 0.0 %
+		displayFolder: National
+
+	measure 'Écart TGV vs N-1' =
+			VAR n = [Ponctualité TGV]
+			VAR n1 = [Ponctualité TGV N-1]
+			RETURN IF ( NOT ISBLANK ( n ) && NOT ISBLANK ( n1 ), ( n - n1 ) * 100 )
+		formatString: +0.0 "pts";-0.0 "pts";0.0 "pts"
+		displayFolder: National
+
+	measure 'Écart TER vs N-1' =
+			VAR n = [Ponctualité TER]
+			VAR n1 = [Ponctualité TER N-1]
+			RETURN IF ( NOT ISBLANK ( n ) && NOT ISBLANK ( n1 ), ( n - n1 ) * 100 )
+		formatString: +0.0 "pts";-0.0 "pts";0.0 "pts"
+		displayFolder: National
+
+	measure 'Écart Intercités vs N-1' =
+			VAR n = [Ponctualité Intercités]
+			VAR n1 = [Ponctualité Intercités N-1]
+			RETURN IF ( NOT ISBLANK ( n ) && NOT ISBLANK ( n1 ), ( n - n1 ) * 100 )
+		formatString: +0.0 "pts";-0.0 "pts";0.0 "pts"
+		displayFolder: National
+
+	measure 'Ponctualité TGV N-1' =
+			VAR moisN1 = SELECTCOLUMNS ( VALUES ( dim_date[mois] ), "mois", EDATE ( dim_date[mois], -12 ) )
+			RETURN CALCULATE ( [Ponctualité TGV], REMOVEFILTERS ( dim_date ), TREATAS ( moisN1, dim_date[mois] ) )
+		formatString: 0.0 %
+		displayFolder: National
+
+	measure 'Ponctualité TER N-1' =
+			VAR moisN1 = SELECTCOLUMNS ( VALUES ( dim_date[mois] ), "mois", EDATE ( dim_date[mois], -12 ) )
+			RETURN CALCULATE ( [Ponctualité TER], REMOVEFILTERS ( dim_date ), TREATAS ( moisN1, dim_date[mois] ) )
+		formatString: 0.0 %
+		displayFolder: National
+
+	measure 'Ponctualité Intercités N-1' =
+			VAR moisN1 = SELECTCOLUMNS ( VALUES ( dim_date[mois] ), "mois", EDATE ( dim_date[mois], -12 ) )
+			RETURN CALCULATE ( [Ponctualité Intercités], REMOVEFILTERS ( dim_date ), TREATAS ( moisN1, dim_date[mois] ) )
+		formatString: 0.0 %
+		displayFolder: National
+
+	/// Lisse la saisonnalité : chaque point couvre les 12 mois qui se terminent à ce mois.
+	measure 'Ponctualité nationale 12 mois glissants' =
+			VAR fin = MAX ( dim_date[mois] )
+			RETURN IF (
+			    NOT ISBLANK ( [Ponctualité nationale] ),
+			    CALCULATE ( [Ponctualité nationale], REMOVEFILTERS ( dim_date ),
+			        dim_date[mois] > EDATE ( fin, -12 ), dim_date[mois] <= fin ) )
+		formatString: 0.0 %
+		displayFolder: National
+
+	measure 'Dernier mois disponible' = "Données jusqu'à " & FORMAT ( CALCULATE ( MAX ( mart_ponctualite_nationale_mois[mois] ), REMOVEFILTERS ( dim_date ) ), "mmmm yyyy" )
+		displayFolder: National
+
+	/// Doit être égal à la valeur affichée dans le titre de la page Contrôle.
+	measure 'Contrôle · TGV 2025' = CALCULATE ( [Ponctualité TGV], dim_date[annee] = 2025 )
+		formatString: 0.0 %
+		displayFolder: Contrôle
+
+	/// Doit être égal à la valeur affichée dans le titre de la page Contrôle.
+	measure 'Contrôle · TER 2025' = CALCULATE ( [Ponctualité TER], dim_date[annee] = 2025 )
+		formatString: 0.0 %
+		displayFolder: Contrôle
+
+	/// Doit être égal à la valeur affichée dans le titre de la page Contrôle.
+	measure 'Contrôle · Intercités 2025' = CALCULATE ( [Ponctualité Intercités], dim_date[annee] = 2025 )
+		formatString: 0.0 %
+		displayFolder: Contrôle
+
+	/// Doit être égal à la valeur affichée dans le titre de la page Contrôle.
+	measure 'Contrôle · Mâcon Loché → Paris 2025' = CALCULATE ( [Ponctualité], dim_date[annee] = 2025, dim_liaison[libelle_liaison] = "Mâcon Loché → Paris Gare de Lyon", dim_liaison[type_service] = "National" )
+		formatString: 0.0 %
+		displayFolder: Contrôle
+
+	/// Doit être égal à la valeur affichée dans le titre de la page Contrôle.
+	measure 'Contrôle · Retard moyen TGV 2025' = CALCULATE ( [Retard moyen des trains en retard (min)], dim_date[annee] = 2025, fct_regularite_liaison_mois[activite] = "TGV" )
+		formatString: 0.0
+		displayFolder: Contrôle
+
+	/// Doit être égal à la valeur affichée dans le titre de la page Contrôle.
+	measure 'Contrôle · Part SNCF Réseau 2018-2026' = CALCULATE ( DIVIDE ( CALCULATE ( [Retards imputés], dim_cause[responsable] = "SNCF Réseau" ), [Retards imputés] ), dim_date[mois] < DATE ( 2026, 5, 1 ) )
+		formatString: 0.0 %
+		displayFolder: Contrôle
+
+	/// Doit être égal à la valeur affichée dans le titre de la page Contrôle.
+	measure 'Contrôle · TER Occitanie 2025' = CALCULATE ( [Ponctualité TER (régions)], dim_date[annee] = 2025, dim_region[region] = "Occitanie" )
+		formatString: 0.0 %
+		displayFolder: Contrôle
+
+	column activite
+		dataType: string
+		summarizeBy: none
+		sourceColumn: activite
+
+	column mois
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		summarizeBy: none
+		sourceColumn: mois
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column nb_trains_prevus
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_prevus
+
+	column nb_trains_circules
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_circules
+
+	column nb_trains_annules
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_annules
+
+	column nb_trains_retard_arrivee
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_retard_arrivee
+
+	column taux_ponctualite
+		dataType: double
+		formatString: 0.0 %
+		summarizeBy: none
+		sourceColumn: taux_ponctualite
+
+	column taux_annulation
+		dataType: double
+		formatString: 0.0 %
+		summarizeBy: none
+		sourceColumn: taux_annulation
+
+	partition mart_ponctualite_nationale_mois = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document ( Binary.Buffer ( Web.Contents ( UrlDonnees, [ RelativePath = "mart_ponctualite_nationale_mois.parquet" ] ) ) )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

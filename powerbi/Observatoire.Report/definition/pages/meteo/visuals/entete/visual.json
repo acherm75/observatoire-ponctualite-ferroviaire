@@ -1,0 +1,49 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "entete",
+  "position": {
+    "x": 16,
+    "y": 8,
+    "z": 0,
+    "width": 1000,
+    "height": 64,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Effet de la météo",
+                    "textStyle": {
+                      "fontSize": "20pt",
+                      "color": "#1B2733",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "TER : ponctualité mensuelle et météo régionale (Météo-France)",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#5B6B7B"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

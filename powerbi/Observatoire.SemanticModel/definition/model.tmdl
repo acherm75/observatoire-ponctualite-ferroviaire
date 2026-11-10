@@ -1,0 +1,26 @@
+model Model
+	culture: fr-FR
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: fr-FR
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_QueryOrder = ["UrlDonnees", "dim_date", "dim_liaison", "dim_gare", "dim_region", "dim_cause", "fct_regularite_liaison_mois", "fct_causes_retard_mois", "fct_regularite_ter_mois", "fct_meteo_region_mois", "mart_ponctualite_nationale_mois", "ml_prevision_mois_suivant", "ml_backtest"]
+
+ref table dim_date
+ref table dim_liaison
+ref table dim_gare
+ref table dim_region
+ref table dim_cause
+ref table fct_regularite_liaison_mois
+ref table fct_causes_retard_mois
+ref table fct_regularite_ter_mois
+ref table fct_meteo_region_mois
+ref table mart_ponctualite_nationale_mois
+ref table ml_prevision_mois_suivant
+ref table ml_backtest
+
+ref cultureInfo fr-FR

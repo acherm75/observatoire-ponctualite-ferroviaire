@@ -1,0 +1,109 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "chaleur_par_mois",
+  "position": {
+    "x": 652,
+    "y": 400,
+    "z": 3000,
+    "width": 612,
+    "height": 304,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_date"
+                    }
+                  },
+                  "Property": "nom_mois"
+                }
+              },
+              "queryRef": "dim_date.nom_mois",
+              "nativeQueryRef": "nom_mois"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_regularite_ter_mois"
+                    }
+                  },
+                  "Property": "Jours de chaleur (moyenne)"
+                }
+              },
+              "queryRef": "fct_regularite_ter_mois.Jours de chaleur (moyenne)",
+              "nativeQueryRef": "Jours de chaleur (moyenne)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_regularite_ter_mois"
+                    }
+                  },
+                  "Property": "Jours de gel (moyenne)"
+                }
+              },
+              "queryRef": "fct_regularite_ter_mois.Jours de gel (moyenne)",
+              "nativeQueryRef": "Jours de gel (moyenne)"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "dim_date"
+                  }
+                },
+                "Property": "nom_mois"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Jours de chaleur et de gel par mois (moyenne régionale)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

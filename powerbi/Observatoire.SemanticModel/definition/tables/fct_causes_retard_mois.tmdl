@@ -1,0 +1,49 @@
+table fct_causes_retard_mois
+
+	/// Trains TGV en retard de plus de 15 minutes, répartis entre les 6 causes.
+	measure 'Retards imputés' = SUM ( fct_causes_retard_mois[nb_trains_retard_imputes] )
+		formatString: #,0
+		displayFolder: Causes
+
+	measure 'Part de la cause' = DIVIDE ( [Retards imputés], CALCULATE ( [Retards imputés], REMOVEFILTERS ( dim_cause ) ) )
+		formatString: 0.0 %
+		displayFolder: Causes
+
+	column liaison_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: liaison_id
+
+	column mois
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		summarizeBy: none
+		sourceColumn: mois
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column code_cause
+		dataType: string
+		summarizeBy: none
+		sourceColumn: code_cause
+
+	column part_cause
+		dataType: double
+		formatString: 0.0 %
+		summarizeBy: none
+		sourceColumn: part_cause
+
+	column nb_trains_retard_imputes
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_retard_imputes
+
+	partition fct_causes_retard_mois = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document ( Binary.Buffer ( Web.Contents ( UrlDonnees, [ RelativePath = "fct_causes_retard_mois.parquet" ] ) ) )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

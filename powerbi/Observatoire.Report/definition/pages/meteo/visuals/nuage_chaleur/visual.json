@@ -1,0 +1,114 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "nuage_chaleur",
+  "position": {
+    "x": 16,
+    "y": 84,
+    "z": 1000,
+    "width": 620,
+    "height": 620,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "scatterChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_date"
+                    }
+                  },
+                  "Property": "annee_mois"
+                }
+              },
+              "queryRef": "dim_date.annee_mois",
+              "nativeQueryRef": "annee_mois"
+            }
+          ]
+        },
+        "X": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_regularite_ter_mois"
+                    }
+                  },
+                  "Property": "Jours de chaleur (moyenne)"
+                }
+              },
+              "queryRef": "fct_regularite_ter_mois.Jours de chaleur (moyenne)",
+              "nativeQueryRef": "Jours de chaleur (moyenne)"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_regularite_ter_mois"
+                    }
+                  },
+                  "Property": "Ponctualité TER (régions)"
+                }
+              },
+              "queryRef": "fct_regularite_ter_mois.Ponctualité TER (régions)",
+              "nativeQueryRef": "Ponctualité TER (régions)"
+            }
+          ]
+        },
+        "Series": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_date"
+                    }
+                  },
+                  "Property": "saison"
+                }
+              },
+              "queryRef": "dim_date.saison",
+              "nativeQueryRef": "saison"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Chaque point est un mois : jours de chaleur et ponctualité TER'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

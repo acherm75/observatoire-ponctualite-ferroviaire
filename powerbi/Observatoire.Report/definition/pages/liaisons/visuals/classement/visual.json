@@ -1,0 +1,231 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "classement",
+  "position": {
+    "x": 16,
+    "y": 84,
+    "z": 4000,
+    "width": 780,
+    "height": 620,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_liaison"
+                    }
+                  },
+                  "Property": "libelle_liaison"
+                }
+              },
+              "queryRef": "dim_liaison.libelle_liaison",
+              "nativeQueryRef": "libelle_liaison",
+              "displayName": "Liaison"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_liaison"
+                    }
+                  },
+                  "Property": "activite"
+                }
+              },
+              "queryRef": "dim_liaison.activite",
+              "nativeQueryRef": "activite",
+              "displayName": "Activité"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_liaison"
+                    }
+                  },
+                  "Property": "type_service"
+                }
+              },
+              "queryRef": "dim_liaison.type_service",
+              "nativeQueryRef": "type_service",
+              "displayName": "Service"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_regularite_liaison_mois"
+                    }
+                  },
+                  "Property": "Trains circulés"
+                }
+              },
+              "queryRef": "fct_regularite_liaison_mois.Trains circulés",
+              "nativeQueryRef": "Trains circulés"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_regularite_liaison_mois"
+                    }
+                  },
+                  "Property": "Ponctualité"
+                }
+              },
+              "queryRef": "fct_regularite_liaison_mois.Ponctualité",
+              "nativeQueryRef": "Ponctualité"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_regularite_liaison_mois"
+                    }
+                  },
+                  "Property": "Écart vs N-1"
+                }
+              },
+              "queryRef": "fct_regularite_liaison_mois.Écart vs N-1",
+              "nativeQueryRef": "Écart vs N-1"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_regularite_liaison_mois"
+                    }
+                  },
+                  "Property": "Taux d'annulation"
+                }
+              },
+              "queryRef": "fct_regularite_liaison_mois.Taux d'annulation",
+              "nativeQueryRef": "Taux d'annulation"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_regularite_liaison_mois"
+                    }
+                  },
+                  "Property": "Retard moyen des trains en retard (min)"
+                }
+              },
+              "queryRef": "fct_regularite_liaison_mois.Retard moyen des trains en retard (min)",
+              "nativeQueryRef": "Retard moyen des trains en retard (min)",
+              "displayName": "Retard moyen (min)"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fct_regularite_liaison_mois"
+                  }
+                },
+                "Property": "Ponctualité"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Liaisons classées de la moins à la plus ponctuelle (au moins 500 trains sur la période)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "au_moins_500_trains",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "fct_regularite_liaison_mois"
+              }
+            },
+            "Property": "Trains circulés"
+          }
+        },
+        "type": "Advanced",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "m",
+              "Entity": "fct_regularite_liaison_mois",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "Comparison": {
+                  "ComparisonKind": 2,
+                  "Left": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Source": "m"
+                        }
+                      },
+                      "Property": "Trains circulés"
+                    }
+                  },
+                  "Right": {
+                    "Literal": {
+                      "Value": "500D"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

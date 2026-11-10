@@ -1,0 +1,60 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "note_rupture",
+  "position": {
+    "x": 852,
+    "y": 460,
+    "z": 4000,
+    "width": 412,
+    "height": 244,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "À savoir",
+                    "textStyle": {
+                      "fontSize": "11pt",
+                      "color": "#1B2733",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "SNCF Réseau (infrastructure et gestion du trafic) porte environ 43 % des retards de 2018 à avril 2026.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#5B6B7B"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Rupture en mai 2026 : la répartition change brutalement, probablement à cause d'un changement de nomenclature dans la source. Comparer 2026 aux années précédentes avec prudence.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#5B6B7B"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

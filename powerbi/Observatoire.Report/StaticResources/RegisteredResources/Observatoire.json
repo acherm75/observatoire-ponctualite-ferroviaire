@@ -1,0 +1,19 @@
+{
+  "name": "Observatoire",
+  "dataColors": ["#d97706", "#16a34a", "#2563eb", "#7c3aed", "#dc2626", "#0891b2", "#64748b", "#db2777"],
+  "foreground": "#1B2733",
+  "foregroundNeutralSecondary": "#5B6B7B",
+  "background": "#FFFFFF",
+  "backgroundLight": "#F4F6F8",
+  "tableAccent": "#2563eb",
+  "good": "#16a34a",
+  "neutral": "#d97706",
+  "bad": "#dc2626",
+  "maximum": "#16a34a",
+  "center": "#FDE68A",
+  "minimum": "#dc2626",
+  "textClasses": {
+    "title": {"fontFace": "Segoe UI Semibold", "fontSize": 12, "color": "#1B2733"},
+    "label": {"fontFace": "Segoe UI", "fontSize": 10, "color": "#1B2733"}
+  }
+}

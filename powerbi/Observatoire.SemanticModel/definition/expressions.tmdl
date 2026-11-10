@@ -1,0 +1,5 @@
+/// Dossier des Parquet publiés chaque jour par le pipeline (remplacer par un dossier local si besoin).
+expression UrlDonnees = "https://raw.githubusercontent.com/acherm75/observatoire-ponctualite-ferroviaire/main/data/marts/" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+
+	annotation PBI_ResultType = Text
+

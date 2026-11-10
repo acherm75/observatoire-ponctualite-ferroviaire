@@ -1,0 +1,26 @@
+table dim_region
+
+	column region
+		dataType: string
+		summarizeBy: none
+		sourceColumn: region
+
+	column nb_departements
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: nb_departements
+
+	column departements
+		dataType: string
+		summarizeBy: none
+		sourceColumn: departements
+
+	partition dim_region = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document ( Binary.Buffer ( Web.Contents ( UrlDonnees, [ RelativePath = "dim_region.parquet" ] ) ) )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

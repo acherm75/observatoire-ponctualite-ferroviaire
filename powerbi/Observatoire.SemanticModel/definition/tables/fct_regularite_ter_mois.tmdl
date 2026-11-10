@@ -1,0 +1,117 @@
+table fct_regularite_ter_mois
+
+	measure 'Ponctualité TER (régions)' = DIVIDE ( SUM ( fct_regularite_ter_mois[nb_trains_circules] ) - SUM ( fct_regularite_ter_mois[nb_trains_retard_arrivee] ), SUM ( fct_regularite_ter_mois[nb_trains_circules] ) )
+		formatString: 0.0 %
+		displayFolder: TER
+
+	measure 'Taux d''annulation TER (régions)' = DIVIDE ( SUM ( fct_regularite_ter_mois[nb_trains_annules] ), SUM ( fct_regularite_ter_mois[nb_trains_prevus] ) )
+		formatString: 0.0 %
+		displayFolder: TER
+
+	measure 'Jours de chaleur (moyenne)' = AVERAGE ( fct_regularite_ter_mois[meteo_jours_chaleur] )
+		formatString: 0.0
+		displayFolder: Météo
+
+	measure 'Jours de gel (moyenne)' = AVERAGE ( fct_regularite_ter_mois[meteo_jours_gel] )
+		formatString: 0.0
+		displayFolder: Météo
+
+	column region
+		dataType: string
+		summarizeBy: none
+		sourceColumn: region
+
+	column mois
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		summarizeBy: none
+		sourceColumn: mois
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column nb_perimetres_source
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: nb_perimetres_source
+
+	column perimetres_source
+		dataType: string
+		summarizeBy: none
+		sourceColumn: perimetres_source
+
+	column nb_trains_prevus
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_prevus
+
+	column nb_trains_circules
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_circules
+
+	column nb_trains_annules
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_annules
+
+	column nb_trains_retard_arrivee
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_trains_retard_arrivee
+
+	column commentaires
+		dataType: string
+		summarizeBy: none
+		sourceColumn: commentaires
+
+	column taux_ponctualite
+		dataType: double
+		formatString: 0.0 %
+		summarizeBy: none
+		sourceColumn: taux_ponctualite
+
+	column taux_annulation
+		dataType: double
+		formatString: 0.0 %
+		summarizeBy: none
+		sourceColumn: taux_annulation
+
+	column meteo_precipitations_mm
+		dataType: double
+		summarizeBy: none
+		sourceColumn: meteo_precipitations_mm
+
+	column meteo_jours_pluie_forte
+		dataType: double
+		summarizeBy: none
+		sourceColumn: meteo_jours_pluie_forte
+
+	column meteo_temperature_moy_c
+		dataType: double
+		summarizeBy: none
+		sourceColumn: meteo_temperature_moy_c
+
+	column meteo_jours_gel
+		dataType: double
+		summarizeBy: none
+		sourceColumn: meteo_jours_gel
+
+	column meteo_jours_chaleur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: meteo_jours_chaleur
+
+	column meteo_jours_vent_fort
+		dataType: double
+		summarizeBy: none
+		sourceColumn: meteo_jours_vent_fort
+
+	partition fct_regularite_ter_mois = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document ( Binary.Buffer ( Web.Contents ( UrlDonnees, [ RelativePath = "fct_regularite_ter_mois.parquet" ] ) ) )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

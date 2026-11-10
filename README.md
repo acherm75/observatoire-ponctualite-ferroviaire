@@ -79,6 +79,18 @@ python -m evaluation.lancer              # ~3 min avec les clés gratuites de .s
 python -m evaluation.lancer --ids q08 q11
 ```
 
+## Rapport Power BI
+
+Le même modèle en étoile est restitué dans un **rapport Power BI de 7 pages**, versionné au format projet (PBIP) :
+modèle en TMDL et pages en JSON, **entièrement générés par un script** ([`powerbi/generer_pbip.py`](powerbi/generer_pbip.py)).
+C'est une démarche « BI as code » : le rapport se relit et se compare dans Git comme le reste du code.
+
+- **42 mesures DAX** qui appliquent les mêmes règles métier que l'app : taux recalculés à partir des sommes, lignes incohérentes exclues, retard moyen pondéré, N-1 par décalage de 12 mois ;
+- **pages** : synthèse, liaisons, causes, régions TER, météo, prévisions, et une **page Contrôle** qui recalcule dans Power BI des chiffres connus (TGV 2025 = 84,9 %, Mâcon Loché → Paris = 69,4 %…) pour prouver que le modèle donne les mêmes résultats que l'app ;
+- **vérifié sans Power BI** : fichiers conformes aux schémas officiels Microsoft ([`powerbi/valider_schemas.py`](powerbi/valider_schemas.py)), et cohérence entre visuels, mesures DAX, modèle et données testée par `pytest`.
+
+Ouverture, actualisation et export : [`docs/powerbi.md`](docs/powerbi.md).
+
 ## Architecture
 
 ```mermaid
@@ -149,12 +161,13 @@ Les tests dbt ont fait remonter des anomalies réelles dans les sources :
 Deux niveaux de contrôle, lancés automatiquement par GitHub Actions :
 
 - **Données** : 60 tests dbt (unicité, relations, valeurs plausibles, causes qui somment à 100 %) à chaque exécution du pipeline.
-- **Code** : 111 tests `pytest` ([`tests/`](tests/)) à chaque push, sans réseau ni clé d'API :
+- **Code** : 161 tests `pytest` ([`tests/`](tests/)) à chaque push, sans réseau ni clé d'API :
   - *assistant IA* : seules les requêtes `SELECT` passent (écriture, `ATTACH`, `COPY`, `SET`… refusés), aucun accès disque même via `read_parquet`, délai max, troncature ; boucle de l'agent avec un faux modèle (correction après erreur SQL, limite d'étapes, relais vers le modèle suivant quand le quota est épuisé) ;
   - *temps réel* : lecture d'extraits SIRI Lite (retard au terminus, seuil de 5 min aux bornes, suppressions totales ou partielles, perturbations en cours, texte nettoyé du HTML) ;
   - *prévision* : **aucune fuite d'information du futur** — modifier un mois et les suivants ne change aucune variable de ce mois.
 
   - *archive temps réel* : fusion des captures (dernière observation, arrivée constatée prioritaire, capture en double ignorée), jour de service en heure de Paris, clôture à J+1 midi, agrégats et couverture ;
+  - *rapport Power BI* : champs des visuels et références DAX présents dans le modèle, colonnes identiques aux Parquet, relations sur des clés uniques ;
   - *évaluation* : notation (nombres à la française, libellés, refus) et validité des 23 requêtes de référence.
 
   Les tests ont été validés par mutation : en réintroduisant volontairement une fuite, en rouvrant l'accès disque ou en décalant le seuil de retard, au moins un test échoue.
@@ -192,9 +205,14 @@ ingestion/        téléchargement SNCF + Météo-France, chargement DuckDB
 transform/        projet dbt (seeds, staging, intermediate, marts, tests)
 ml/forecast.py    prévision XGBoost + backtest
 notebooks/        analyse exploratoire
-app/              application Streamlit
+app/              application Streamlit (dont assistant IA et temps réel)
 data/marts/       tables finales en Parquet (versionnées, mises à jour par la CI)
-docs/powerbi.md   construction du rapport Power BI
+data/temps_reel/  ponctualité jour par jour issue de l'archive temps réel
+powerbi/          rapport Power BI au format projet (PBIP), généré par script
+evaluation/       évaluation de l'assistant IA (questions de référence, notation)
+scripts/          empreinte des données, export, archivage temps réel
+tests/            tests pytest
+docs/powerbi.md   ouverture et vérification du rapport Power BI
 pipeline.py       point d'entrée unique
 ```
 

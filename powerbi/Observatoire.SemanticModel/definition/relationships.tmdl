@@ -1,0 +1,56 @@
+relationship r01_fct_regularite_liaison_mois_dim_date
+	fromColumn: fct_regularite_liaison_mois.mois
+	toColumn: dim_date.mois
+
+relationship r02_fct_regularite_liaison_mois_dim_liaison
+	fromColumn: fct_regularite_liaison_mois.liaison_id
+	toColumn: dim_liaison.liaison_id
+
+relationship r03_fct_causes_retard_mois_dim_date
+	fromColumn: fct_causes_retard_mois.mois
+	toColumn: dim_date.mois
+
+relationship r04_fct_causes_retard_mois_dim_liaison
+	fromColumn: fct_causes_retard_mois.liaison_id
+	toColumn: dim_liaison.liaison_id
+
+relationship r05_fct_causes_retard_mois_dim_cause
+	fromColumn: fct_causes_retard_mois.code_cause
+	toColumn: dim_cause.code_cause
+
+relationship r06_fct_regularite_ter_mois_dim_date
+	fromColumn: fct_regularite_ter_mois.mois
+	toColumn: dim_date.mois
+
+relationship r07_fct_regularite_ter_mois_dim_region
+	fromColumn: fct_regularite_ter_mois.region
+	toColumn: dim_region.region
+
+relationship r08_fct_meteo_region_mois_dim_date
+	fromColumn: fct_meteo_region_mois.mois
+	toColumn: dim_date.mois
+
+relationship r09_fct_meteo_region_mois_dim_region
+	fromColumn: fct_meteo_region_mois.region
+	toColumn: dim_region.region
+
+relationship r10_mart_ponctualite_nationale_mois_dim_date
+	fromColumn: mart_ponctualite_nationale_mois.mois
+	toColumn: dim_date.mois
+
+relationship r11_dim_liaison_dim_gare
+	fromColumn: dim_liaison.gare_depart_id
+	toColumn: dim_gare.gare_id
+
+relationship r12_dim_liaison_dim_gare
+	isActive: false
+	fromColumn: dim_liaison.gare_arrivee_id
+	toColumn: dim_gare.gare_id
+
+relationship r13_ml_prevision_mois_suivant_dim_liaison
+	fromColumn: ml_prevision_mois_suivant.liaison_id
+	toColumn: dim_liaison.liaison_id
+
+relationship r14_ml_backtest_dim_liaison
+	fromColumn: ml_backtest.liaison_id
+	toColumn: dim_liaison.liaison_id

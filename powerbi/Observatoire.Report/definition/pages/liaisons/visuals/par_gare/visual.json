@@ -1,0 +1,95 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "par_gare",
+  "position": {
+    "x": 812,
+    "y": 396,
+    "z": 6000,
+    "width": 452,
+    "height": 308,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "clusteredBarChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_gare"
+                    }
+                  },
+                  "Property": "nom_gare"
+                }
+              },
+              "queryRef": "dim_gare.nom_gare",
+              "nativeQueryRef": "nom_gare"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_regularite_liaison_mois"
+                    }
+                  },
+                  "Property": "Ponctualité"
+                }
+              },
+              "queryRef": "fct_regularite_liaison_mois.Ponctualité",
+              "nativeQueryRef": "Ponctualité"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fct_regularite_liaison_mois"
+                  }
+                },
+                "Property": "Ponctualité"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Ponctualité par gare de départ'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

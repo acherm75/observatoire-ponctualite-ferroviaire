@@ -1,0 +1,74 @@
+table fct_meteo_region_mois
+
+	column region
+		dataType: string
+		summarizeBy: none
+		sourceColumn: region
+
+	column mois
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		summarizeBy: none
+		sourceColumn: mois
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column nb_departements
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: nb_departements
+
+	column nb_stations
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_stations
+
+	column precipitations_mm
+		dataType: double
+		summarizeBy: none
+		sourceColumn: precipitations_mm
+
+	column nb_jours_pluie_forte
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_jours_pluie_forte
+
+	column temperature_moy_c
+		dataType: double
+		summarizeBy: none
+		sourceColumn: temperature_moy_c
+
+	column temperature_min_c
+		dataType: double
+		summarizeBy: none
+		sourceColumn: temperature_min_c
+
+	column temperature_max_c
+		dataType: double
+		summarizeBy: none
+		sourceColumn: temperature_max_c
+
+	column nb_jours_gel
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_jours_gel
+
+	column nb_jours_chaleur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_jours_chaleur
+
+	column nb_jours_vent_fort
+		dataType: double
+		summarizeBy: none
+		sourceColumn: nb_jours_vent_fort
+
+	partition fct_meteo_region_mois = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document ( Binary.Buffer ( Web.Contents ( UrlDonnees, [ RelativePath = "fct_meteo_region_mois.parquet" ] ) ) )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

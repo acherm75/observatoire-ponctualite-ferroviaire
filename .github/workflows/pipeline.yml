@@ -53,5 +53,6 @@ jobs:
             echo "Aucune nouvelle donnée."
           else
             git commit -m "data: mise à jour automatique du $(date -u +%Y-%m-%d)"
-            git push
+            # L'archivage temps réel pousse aussi sur main : on se remet à jour avant de pousser.
+            for i in 1 2 3; do git pull --rebase && git push && exit 0; sleep 5; done; exit 1
           fi

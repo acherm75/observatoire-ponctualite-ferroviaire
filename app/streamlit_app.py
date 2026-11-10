@@ -324,9 +324,38 @@ def onglet_direct():
 
 
 SEUIL_DIRECT = 5
+ARCHIVE_JOURS = MARTS.parent / "temps_reel" / "ponctualite_jour.parquet"
+COUVERTURE_MIN = 0.75  # part des captures (toutes les 15 min) réussies pour qu'une journée soit fiable
+
+
+def historique_direct():
+    st.subheader("Ponctualité jour par jour")
+    st.caption("Mesurée en archivant le flux temps réel toutes les 15 minutes (GitHub Actions) : chaque train "
+               "est compté avec son retard au terminus, constaté s'il a été vu arrivé, sinon le dernier estimé. "
+               "La SNCF ne publie la ponctualité qu'au mois : ce suivi quotidien est propre à l'observatoire. "
+               "Détail train par train : [archive](https://github.com/acherm75/observatoire-ponctualite-ferroviaire/releases/tag/archive-temps-reel).")
+    jours = pd.read_parquet(ARCHIVE_JOURS) if ARCHIVE_JOURS.exists() else pd.DataFrame()
+    fiables = jours[jours["couverture"] >= COUVERTURE_MIN] if not jours.empty else jours
+    if fiables.empty:
+        st.info("Archivage démarré le 10 novembre 2026 : les premières journées complètes apparaîtront ici "
+                "le lendemain de leur clôture (chaque journée est clôturée le jour suivant à midi).")
+        return
+    fiables = fiables.assign(jour=pd.to_datetime(fiables["jour"]))
+    fig = px.line(fiables, x="jour", y="taux_ponctualite", color="categorie", markers=True,
+                  hover_data={"nb_trains_circules": True, "part_arrivees_constatees": ":.0%", "couverture": ":.0%"},
+                  labels={"jour": "", "taux_ponctualite": "Ponctualité", "categorie": "Activité",
+                          "nb_trains_circules": "Trains", "part_arrivees_constatees": "Arrivées constatées",
+                          "couverture": "Captures réussies"})
+    fig.update_layout(yaxis_tickformat=".0%", height=360, margin=dict(l=0, r=0, t=10, b=0))
+    st.plotly_chart(fig, width="stretch")
+    ecartes = jours["jour"].nunique() - fiables["jour"].nunique()
+    if ecartes:
+        st.caption(f"{ecartes} journée(s) écartée(s) : moins de {COUVERTURE_MIN:.0%} des captures réussies.")
+
 
 with onglets[6]:
     onglet_direct()
+    historique_direct()
 
 with onglets[7]:
     fournisseur = secret("ASSISTANT_FOURNISSEUR", "gemini")

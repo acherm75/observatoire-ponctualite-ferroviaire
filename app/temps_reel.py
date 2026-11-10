@@ -95,6 +95,8 @@ def charger_trains() -> tuple[pd.DataFrame, pd.DataFrame, dt.datetime]:
                 "depart_prevu": arrets[-len(appels)]["depart_prevu"],
                 "arrivee_prevue": dernier["arrivee_prevue"],
                 "retard_terminus_min": dernier["retard_arrivee_min"],
+                # Terminus déjà passé : retard constaté et non plus estimé.
+                "arrivee_constatee": dernier["deja_passe"],
                 "supprime": train_supprime,
                 "partiellement_supprime": not train_supprime and any(a["arret_supprime"] for a in arrets[-len(appels):]),
             })

@@ -31,6 +31,18 @@ annoncées. Les données viennent des flux publics **SIRI Lite** de la SNCF diff
 [transport.data.gouv.fr](https://transport.data.gouv.fr/datasets/horaires-sncf) (sans clé d'API),
 actualisés toutes les 2 minutes. Même définition du retard que les statistiques mensuelles (≥ 5 min).
 
+### Archive quotidienne : la ponctualité jour par jour
+
+La SNCF ne publie la ponctualité qu'au mois. Pour la suivre **au jour le jour**, le flux temps réel est archivé
+([`scripts/archiver_temps_reel.py`](scripts/archiver_temps_reel.py),
+[`.github/workflows/temps_reel.yml`](.github/workflows/temps_reel.yml)) :
+
+- le flux est une fenêtre glissante : un train y apparaît environ 1 h avant son départ et disparaît environ 10 min après son arrivée. Il est donc capturé **toutes les 15 minutes** ;
+- pour chaque train, on garde la dernière observation : le **retard constaté** au terminus s'il a été vu arrivé, sinon le dernier retard estimé. Une arrivée constatée n'est jamais remplacée par une estimation ;
+- chaque journée (jour de départ prévu) est clôturée le lendemain à midi, après l'arrivée des trains de nuit. L'agrégat par activité est commité dans `data/temps_reel/` et le détail train par train est publié en [release](https://github.com/acherm75/observatoire-ponctualite-ferroviaire/releases/tag/archive-temps-reel), hors du dépôt (environ 1 Mo par jour) ;
+- l'état de la journée en cours vit dans le cache de GitHub Actions, ce qui évite un commit toutes les 15 minutes ;
+- **fiabilité mesurée** : chaque journée a sa couverture (captures réussies / 96, les crons GitHub pouvant être retardés ou sautés) et sa part d'arrivées constatées. L'app écarte les journées couvertes à moins de 75 %.
+
 ## Assistant IA : poser une question en français
 
 L'onglet **🤖 Assistant IA** de l'app répond à des questions comme *« Quelles sont les 5 liaisons TGV les moins
@@ -81,6 +93,7 @@ flowchart LR
     ML --> E
     E --> ST[App Streamlit]
     RT[SNCF temps réel<br/>SIRI Lite] --> ST
+    RT --> AR[Archive<br/>toutes les 15 min] --> ST
     E --> PBI[Power BI]
     GH[GitHub Actions<br/>chaque jour à 6 h] -.-> I
 ```
@@ -136,11 +149,12 @@ Les tests dbt ont fait remonter des anomalies réelles dans les sources :
 Deux niveaux de contrôle, lancés automatiquement par GitHub Actions :
 
 - **Données** : 60 tests dbt (unicité, relations, valeurs plausibles, causes qui somment à 100 %) à chaque exécution du pipeline.
-- **Code** : 102 tests `pytest` ([`tests/`](tests/)) à chaque push, sans réseau ni clé d'API :
+- **Code** : 111 tests `pytest` ([`tests/`](tests/)) à chaque push, sans réseau ni clé d'API :
   - *assistant IA* : seules les requêtes `SELECT` passent (écriture, `ATTACH`, `COPY`, `SET`… refusés), aucun accès disque même via `read_parquet`, délai max, troncature ; boucle de l'agent avec un faux modèle (correction après erreur SQL, limite d'étapes, relais vers le modèle suivant quand le quota est épuisé) ;
   - *temps réel* : lecture d'extraits SIRI Lite (retard au terminus, seuil de 5 min aux bornes, suppressions totales ou partielles, perturbations en cours, texte nettoyé du HTML) ;
   - *prévision* : **aucune fuite d'information du futur** — modifier un mois et les suivants ne change aucune variable de ce mois.
 
+  - *archive temps réel* : fusion des captures (dernière observation, arrivée constatée prioritaire, capture en double ignorée), jour de service en heure de Paris, clôture à J+1 midi, agrégats et couverture ;
   - *évaluation* : notation (nombres à la française, libellés, refus) et validité des 23 requêtes de référence.
 
   Les tests ont été validés par mutation : en réintroduisant volontairement une fuite, en rouvrant l'accès disque ou en décalant le seuil de retard, au moins un test échoue.

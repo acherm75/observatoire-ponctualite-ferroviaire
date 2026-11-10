@@ -1,0 +1,78 @@
+name: Archivage temps réel
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # le flux est une fenêtre glissante : un train n'y reste que ~1 h après son départ
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temps-reel
+  cancel-in-progress: false
+
+env:
+  ETAT: etat_temps_reel
+  RELEASE: archive-temps-reel
+
+jobs:
+  capturer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dépendances
+        run: pip install pandas pyarrow requests
+
+      # État de la journée (une ligne par train vu) conservé d'une exécution à l'autre dans le cache,
+      # pour éviter un commit toutes les 15 minutes. On restaure le plus récent.
+      - name: Restaurer l'état
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ env.ETAT }}
+          key: temps-reel-etat-${{ github.run_id }}
+          restore-keys: temps-reel-etat-
+
+      - name: Capturer le flux
+        # Flux momentanément indisponible : on saute cette capture sans faire échouer le job.
+        run: python -m scripts.archiver_temps_reel capturer --etat "$ETAT" || echo "::warning::Capture impossible (flux indisponible ?)"
+
+      - name: Clôturer les journées terminées
+        id: cloture
+        run: |
+          jours=$(python -m scripts.archiver_temps_reel cloturer --etat "$ETAT" --sortie data/temps_reel | tr '\n' ' ')
+          echo "jours=$jours" >> "$GITHUB_OUTPUT"
+          echo "Journées clôturées : ${jours:-aucune}"
+
+      - name: Publier le détail train par train (release)
+        if: steps.cloture.outputs.jours != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$RELEASE" >/dev/null 2>&1 || gh release create "$RELEASE" --latest=false \
+            --title "Archive temps réel SNCF" \
+            --notes "Un fichier Parquet par jour : chaque train vu dans le flux SIRI Lite, avec son retard au terminus (constaté ou dernier estimé). Produit par .github/workflows/temps_reel.yml."
+          gh release upload "$RELEASE" data/temps_reel/trains_*.parquet --clobber
+
+      - name: Publier les agrégats quotidiens
+        if: steps.cloture.outputs.jours != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/temps_reel/ponctualite_jour.parquet
+          git commit -m "data: ponctualité temps réel du ${{ steps.cloture.outputs.jours }}"
+          for i in 1 2 3; do git pull --rebase && git push && exit 0; sleep 5; done; exit 1
+
+      # Sauvegardé seulement si tout a réussi : sinon la prochaine exécution repart de l'état
+      # précédent et retente la clôture (une capture perdue plutôt qu'une journée).
+      - name: Sauvegarder l'état
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.ETAT }}
+          key: temps-reel-etat-${{ github.run_id }}-${{ github.run_attempt }}

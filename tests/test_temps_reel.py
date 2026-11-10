@@ -151,6 +151,21 @@ def test_seuil_de_retard_aux_bornes(monkeypatch, arrivee_estimee, en_retard):
     assert trains.set_index("numero").loc["860001", "en_retard"] == en_retard
 
 
+def test_arrivee_constatee_quand_le_terminus_est_passe(trains_arrets, monkeypatch):
+    trains, *_ = trains_arrets
+    assert not trains["arrivee_constatee"].any()  # aucun train du fixture n'est arrivé
+    arrive = """<Siri xmlns="http://www.siri.org.uk/siri"><ServiceDelivery><EstimatedVehicleJourney>
+      <ProductCategoryRef>SNCF::highSpeedRail</ProductCategoryRef><TrainNumbers><TrainNumberRef>1</TrainNumberRef></TrainNumbers>
+      <RecordedCalls>
+       <RecordedCall><StopPointName>A</StopPointName><Order>1</Order><AimedDepartureTime>2026-11-09T08:00:00Z</AimedDepartureTime></RecordedCall>
+       <RecordedCall><StopPointName>B</StopPointName><Order>2</Order><AimedArrivalTime>2026-11-09T09:00:00Z</AimedArrivalTime>
+        <ExpectedArrivalTime>2026-11-09T09:07:00Z</ExpectedArrivalTime></RecordedCall>
+      </RecordedCalls></EstimatedVehicleJourney></ServiceDelivery></Siri>"""
+    monkeypatch.setattr(temps_reel, "_telecharger", lambda url: ET.fromstring(arrive))
+    t = temps_reel.charger_trains()[0].iloc[0]
+    assert t["arrivee_constatee"] and t["retard_terminus_min"] == 7
+
+
 def test_suppressions(trains_arrets):
     trains, arrets, _ = trains_arrets
     t = trains.set_index("numero")

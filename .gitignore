@@ -12,3 +12,5 @@ transform/logs/
 logs/
 .env
 .streamlit/secrets.toml
+etat_temps_reel/
+data/temps_reel/trains_*.parquet

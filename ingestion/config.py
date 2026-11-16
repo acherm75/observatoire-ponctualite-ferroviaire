@@ -13,7 +13,9 @@ SNCF_DATASETS = {
     "regularite-mensuelle-tgv-aqst": "tgv_regularite",
     "regularite-mensuelle-ter": "ter_regularite",
     "regularite-mensuelle-intercites": "intercites_regularite",
-    "frequentation-gares": "frequentation_gares",
+    # Depuis nov. 2026 la SNCF publie l'historique 2015-2024 à part ; le jeu courant ne garde que les années récentes.
+    "frequentation-gares-archive": "frequentation_gares",
+    "frequentation-gares": "frequentation_gares_recent",
 }
 
 # --- Météo-France : données climatologiques mensuelles par département ---

@@ -14,6 +14,8 @@ sources:
       - name: intercites_regularite
         description: Régularité mensuelle Intercités par relation, depuis 2014.
       - name: frequentation_gares
-        description: Fréquentation annuelle des gares (voyageurs), 2015 à 2024.
+        description: Fréquentation annuelle des gares (voyageurs), 2015 à 2024 (jeu SNCF « archive »).
+      - name: frequentation_gares_recent
+        description: Fréquentation annuelle des gares (voyageurs), années depuis 2025.
       - name: meteo_mensuelle
         description: Données climatologiques mensuelles par poste Météo-France.

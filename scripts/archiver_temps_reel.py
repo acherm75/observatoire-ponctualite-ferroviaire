@@ -102,22 +102,27 @@ def cloturer(dossier_etat: Path, dossier_sortie: Path, maintenant: pd.Timestamp 
     maintenant = maintenant or pd.Timestamp.now(tz=FUSEAU)
     etat = _lire(dossier_etat / FICHIER_ETAT, COLONNES)
     captures = _lire(dossier_etat / FICHIER_CAPTURES, ["horodatage", "nb_trains"])
-    jours = sorted(j for j in etat["jour"].unique() if pd.Timestamp(j, tz=FUSEAU) + HEURE_CLOTURE <= maintenant)
-    if not jours:
+    terminees = sorted(j for j in etat["jour"].unique() if pd.Timestamp(j, tz=FUSEAU) + HEURE_CLOTURE <= maintenant)
+    if not terminees:
         return []
-    dossier_sortie.mkdir(parents=True, exist_ok=True)
     chemin_jours = dossier_sortie / FICHIER_JOURS
     historique = _lire(chemin_jours, [])
+    # Une journée déjà clôturée ne l'est jamais une seconde fois : le flux garde parfois quelques trains
+    # de la veille après la clôture, et les ré-agréger seuls écraserait la vraie journée. On les jette.
+    deja = set(historique["jour"]) if "jour" in historique else set()
+    jours = [j for j in terminees if j not in deja]
+    dossier_sortie.mkdir(parents=True, exist_ok=True)
     for jour in jours:
         trains = etat[etat["jour"] == jour].drop(columns="jour").sort_values("depart_prevu")
         trains.to_parquet(dossier_sortie / f"trains_{jour}.parquet", index=False)
         nouveau = agreger(trains, captures, jour)
         historique = nouveau if historique.empty else pd.concat(
             [historique[historique["jour"] != jour], nouveau], ignore_index=True)
-    historique.sort_values(["jour", "categorie"]).to_parquet(chemin_jours, index=False)
+    if jours:
+        historique.sort_values(["jour", "categorie"]).to_parquet(chemin_jours, index=False)
 
     # L'état ne garde que les journées en cours ; les captures de plus de 3 jours sont inutiles.
-    etat[~etat["jour"].isin(jours)].to_parquet(dossier_etat / FICHIER_ETAT, index=False)
+    etat[~etat["jour"].isin(terminees)].to_parquet(dossier_etat / FICHIER_ETAT, index=False)
     h = pd.to_datetime(captures["horodatage"], utc=True)
     captures[h >= maintenant.tz_convert("UTC") - pd.Timedelta(days=3)].to_parquet(dossier_etat / FICHIER_CAPTURES, index=False)
     return jours

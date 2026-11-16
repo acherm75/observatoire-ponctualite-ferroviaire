@@ -107,15 +107,17 @@ def test_agregats_du_jour():
     assert a.loc["TER", "taux_ponctualite"] == 1
 
 
-def test_recloture_d_une_journee_remplace_ses_agregats(tmp_path):
+def test_trains_retardataires_d_une_journee_deja_cloturee_ignores(tmp_path):
+    """Le flux garde parfois des trains de la veille après la clôture : ils ne doivent pas écraser la journée."""
     sortie = tmp_path / "sortie"
     sortie.mkdir()
-    ancien = pd.DataFrame({"jour": ["2026-11-09", "2026-11-10"], "categorie": ["TGV", "TGV"], "taux_ponctualite": [0.9, 0.1]})
+    ancien = pd.DataFrame({"jour": ["2026-11-09", "2026-11-10"], "categorie": ["TGV", "TGV"],
+                           "nb_trains": [500, 400], "taux_ponctualite": [0.9, 0.8]})
     ancien.to_parquet(sortie / arch.FICHIER_JOURS)
     etat = tmp_path / "etat"
     etat.mkdir()
     arch.observation(_trains(("1", "TGV", "08:00", 0, False, True)), _t("09:00")).to_parquet(etat / arch.FICHIER_ETAT)
-    arch.cloturer(etat, sortie, pd.Timestamp("2026-11-12", tz=PARIS))
-    jours = pd.read_parquet(sortie / arch.FICHIER_JOURS)
-    assert jours["jour"].tolist() == ["2026-11-09", "2026-11-10"]
-    assert jours.set_index("jour").loc["2026-11-10", "taux_ponctualite"] == 1
+    assert arch.cloturer(etat, sortie, pd.Timestamp("2026-11-12", tz=PARIS)) == []
+    pd.testing.assert_frame_equal(pd.read_parquet(sortie / arch.FICHIER_JOURS), ancien)
+    assert not (sortie / "trains_2026-11-10.parquet").exists()  # le détail publié n'est pas écrasé non plus
+    assert pd.read_parquet(etat / arch.FICHIER_ETAT).empty  # retardataires purgés de l'état
